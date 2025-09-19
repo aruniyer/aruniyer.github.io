@@ -15,6 +15,42 @@
     --border-radius: 8px;
     --max-width: 1200px;
     --section-padding: 80px 20px;
+    --focus-ring: 0 0 0 3px rgba(0,120,212,0.4);
+}
+
+/* Dark theme variables (will activate when body has .dark-theme) */
+body.dark-theme {
+    --primary-color: #3aa9ff;
+    --secondary-color: #62baff;
+    --accent-color: #64ffe9;
+    --text-dark: #f5f5f5;
+    --text-light: #d0d0ce;
+    --text-muted: #a3a19f;
+    --background-light: #1f1f1f;
+    --background-white: #141414;
+    --border-light: #2a2a2a;
+    --shadow-light: rgba(0,0,0,0.4);
+    --shadow-medium: rgba(0,0,0,0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+    body:not(.light-forced) {
+        --primary-color: #3aa9ff;
+        --secondary-color: #62baff;
+        --accent-color: #64ffe9;
+        --text-dark: #f5f5f5;
+        --text-light: #d0d0ce;
+        --text-muted: #a3a19f;
+        --background-light: #1f1f1f;
+        --background-white: #141414;
+        --border-light: #2a2a2a;
+        --shadow-light: rgba(0,0,0,0.4);
+        --shadow-medium: rgba(0,0,0,0.6);
+    }
+}
+
+body, .research-card, .publication-card, .additional-links, .social-link, .education-item {
+    transition: background-color .4s ease, color .4s ease, border-color .4s ease;
 }
 
 /* Reset and base styles */
@@ -34,6 +70,20 @@ body {
     color: var(--text-dark);
     background-color: var(--background-white);
 }
+
+/* Skip link */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary-color);
+    color: #fff;
+    padding: 8px 16px;
+    z-index: 10000;
+    border-radius: 0 0 4px 0;
+    transition: top 0.2s ease;
+}
+.skip-link:focus { top: 0; }
 
 /* Container */
 .container {
@@ -109,6 +159,26 @@ a:hover {
     margin: 0;
 }
 
+.theme-toggle {
+    background: var(--background-light);
+    border: 1px solid var(--border-light);
+    color: var(--text-dark);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-right: 1rem;
+    transition: var(--transition);
+}
+.theme-toggle:hover, .theme-toggle:focus {
+    background: var(--primary-color);
+    color: #fff;
+    box-shadow: var(--focus-ring);
+}
+
 .nav-link {
     font-weight: 500;
     color: var(--text-dark);
@@ -118,6 +188,11 @@ a:hover {
 }
 
 .nav-link:hover {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.nav-link.active {
     color: var(--primary-color);
     border-bottom-color: var(--primary-color);
 }
@@ -139,7 +214,12 @@ a:hover {
 /* Hero Section */
 .hero {
     padding: 120px 20px 80px;
-    background: linear-gradient(135deg, var(--background-light) 0%, var(--background-white) 100%);
+    background: linear-gradient(135deg, var(--background-light) 0%, var(--background-white) 60%), radial-gradient(circle at 70% 30%, rgba(64,224,208,0.15), transparent 60%);
+    background-blend-mode: overlay;
+    position: relative;
+}
+body.dark-theme .hero {
+    background: linear-gradient(135deg, #1a1a1a 0%, #111 60%), radial-gradient(circle at 70% 30%, rgba(58,169,255,0.15), transparent 60%);
 }
 
 .hero-content {
@@ -193,6 +273,7 @@ a:hover {
     height: 200px;
     border-radius: 50%;
     object-fit: cover;
+    object-position: left center; /* Focus on the left side where your face is */
     border: 4px solid var(--primary-color);
     box-shadow: 0 8px 25px var(--shadow-medium);
     transition: var(--transition);
@@ -308,6 +389,7 @@ a:hover {
     text-align: center;
     transition: var(--transition);
 }
+body.dark-theme .research-card { background: #1e1e1e; }
 
 .research-card:hover {
     transform: translateY(-5px);
@@ -352,6 +434,7 @@ a:hover {
     transition: var(--transition);
     position: relative;
 }
+body.dark-theme .publication-card { background:#1e1e1e; border-color:#2a2a2a; }
 
 .publication-card:hover {
     box-shadow: 0 4px 20px var(--shadow-light);
@@ -477,6 +560,7 @@ a:hover {
     border-radius: 4px;
     border-left: 3px solid var(--primary-color);
 }
+body.dark-theme .publication-abstract { background:#222; }
 
 /* Contact Section */
 .contact-content {
@@ -521,6 +605,7 @@ a:hover {
     box-shadow: 0 2px 10px var(--shadow-light);
     transition: var(--transition);
 }
+body.dark-theme .social-link { background:#1e1e1e; }
 
 .social-link:hover {
     transform: translateX(5px);
@@ -538,6 +623,7 @@ a:hover {
     border-radius: var(--border-radius);
     box-shadow: 0 4px 20px var(--shadow-light);
 }
+body.dark-theme .additional-links { background:#1e1e1e; }
 
 .additional-links h3 {
     color: var(--text-dark);
@@ -564,6 +650,28 @@ a:hover {
     background: var(--background-light);
 }
 
+/* Placeholder (future) resource cards */
+.resource-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.resource-card {
+    background: var(--background-light);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    text-align: center;
+    transition: var(--transition);
+    border: 1px solid var(--border-light);
+}
+body.dark-theme .resource-card { background:#1e1e1e; }
+.resource-card:hover { transform: translateY(-4px); box-shadow: 0 4px 15px var(--shadow-light); }
+.resource-card i { font-size:1.5rem; color: var(--primary-color); margin-bottom: .5rem; }
+
+/* Improved focus ring */
+*:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
 /* Footer */
 .footer {
     background: var(--text-dark);
@@ -571,6 +679,7 @@ a:hover {
     text-align: center;
     padding: 2rem 20px;
 }
+body.dark-theme .footer { background:#111; }
 
 .footer p {
     color: #ccc;

@@ -3,11 +3,50 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mobile navigation toggle
     const navToggle = document.querySelector('.nav-toggle');
     const navMenu = document.querySelector('.nav-menu');
+    const themeToggle = document.getElementById('theme-toggle');
+
+    // Restore theme preference
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+    } else if (storedTheme === 'light') {
+        document.body.classList.add('light-forced');
+    }
+    updateThemeToggleIcon();
     
     if (navToggle && navMenu) {
         navToggle.addEventListener('click', function() {
+            const expanded = navToggle.getAttribute('aria-expanded') === 'true';
             navMenu.classList.toggle('active');
             navToggle.classList.toggle('active');
+            navToggle.setAttribute('aria-expanded', String(!expanded));
+        });
+    }
+
+    // Theme toggle handler
+    function updateThemeToggleIcon() {
+        if (!themeToggle) return;
+        const icon = themeToggle.querySelector('i');
+        if (document.body.classList.contains('dark-theme')) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        } else {
+            icon.classList.add('fa-moon');
+            icon.classList.remove('fa-sun');
+        }
+    }
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.body.classList.toggle('dark-theme');
+            if (isDark) {
+                document.body.classList.remove('light-forced');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                // Distinguish explicit light choice from system preference dark
+                document.body.classList.add('light-forced');
+                localStorage.setItem('theme', 'light');
+            }
+            updateThemeToggleIcon();
         });
     }
     
@@ -50,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
                 // Remove active class from all nav links
-                navLinks.forEach(link => link.classList.remove('active'));
+            navLinks.forEach(link => link.classList.remove('active'));
                 // Add active class to current nav link
                 if (correspondingNavLink) {
                     correspondingNavLink.classList.add('active');
@@ -94,6 +133,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Observe all cards and sections
     const animatedElements = document.querySelectorAll('.research-card, .education-item, .contact-item');
     animatedElements.forEach(el => observer.observe(el));
+
+    // Future: make publication abstracts collapsible (placeholder logic)
+    const publicationCards = document.querySelectorAll('.publication-card');
+    publicationCards.forEach(card => {
+        const abstract = card.querySelector('.publication-abstract');
+        if (abstract) {
+            abstract.setAttribute('data-expanded', 'true');
+            // Placeholder for future collapsible behavior
+        }
+    });
 });
 
 // Add CSS for mobile menu and animations

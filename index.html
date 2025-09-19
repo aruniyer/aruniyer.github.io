@@ -4,25 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arun Iyer - Principal Researcher at Microsoft Research</title>
+    <meta name="description" content="Arun Iyer, Principal Researcher at Microsoft Research India. Research areas include AI, Data Platforms & Analytics, and ML & Programming Languages.">
+    <meta property="og:title" content="Arun Iyer - Principal Researcher, Microsoft Research">
+    <meta property="og:description" content="Principal Researcher at Microsoft Research India focusing on AI, Data Platforms & Analytics, and ML & Programming Languages.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://aruniyer.github.io/">
+    <meta property="og:image" content="https://www.cse.iitb.ac.in/~aruniyer/images/intro_self.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Arun Iyer - Principal Researcher, Microsoft Research">
+    <meta name="twitter:description" content="Researcher in AI, Data Platforms, and ML & Programming Languages.">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <header class="header">
         <nav class="nav">
             <div class="nav-container">
                 <div class="nav-brand">
                     <h1>Arun Iyer</h1>
                 </div>
-                <ul class="nav-menu">
+                <ul class="nav-menu" id="primary-navigation">
                     <li><a href="#about" class="nav-link">About</a></li>
                     <li><a href="#research" class="nav-link">Research</a></li>
                     <li><a href="#publications" class="nav-link">Publications</a></li>
                     <li><a href="#contact" class="nav-link">Contact</a></li>
                     <li><a href="#additional-resources" class="nav-link">Additional Resources</a></li>
                 </ul>
-                <div class="nav-toggle">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="primary-navigation">
                     <span></span>
                     <span></span>
                     <span></span>
@@ -31,7 +45,7 @@
         </nav>
     </header>
 
-    <main>
+    <main id="main-content">
         <!-- Hero Section -->
         <section class="hero" id="hero">
             <div class="container">
@@ -46,8 +60,8 @@
                             <a href="#contact" class="btn btn-secondary">Get in Touch</a>
                         </div>
                     </div>
-                    <div class="hero-image">
-                        <img src="https://www.cse.iitb.ac.in/~aruniyer/images/intro_self.png" alt="Arun Iyer" class="profile-image">
+                    <div class="hero-image" role="img" aria-label="Portrait of Arun Iyer">
+                        <img src="https://www.cse.iitb.ac.in/~aruniyer/images/intro_self.png" alt="Arun Iyer" class="profile-image" loading="lazy" width="200" height="200">
                     </div>
                 </div>
             </div>
@@ -61,7 +75,7 @@
                     <div class="about-text">
                         <p class="lead">I am currently a Principal Researcher at Microsoft Research India in Bangalore, where I focus on the intersection of Machine Learning and Artificial Intelligence.</p>
                         
-                        <p>My research journey has been diverse and exciting. I completed my PhD in Computer Science from the Indian Institute of Technology Bombay, working with <a href="https://www.cse.iitb.ac.in/~sunita/" target="_blank">Prof. Sunita Sarawagi</a> and <a href="https://www.cse.iitb.ac.in/~saketh/" target="_blank">Prof. Saketha Nath</a>. Before pursuing my PhD, I worked for 4 years as a Research Engineer at Yahoo Labs in Bangalore.</p>
+                        <p>My research journey has been diverse and exciting. I completed my PhD in Computer Science from the Indian Institute of Technology Bombay, working with <a href="https://www.cse.iitb.ac.in/~sunita/" target="_blank" rel="noopener noreferrer">Prof. Sunita Sarawagi</a> and <a href="https://www.cse.iitb.ac.in/~saketh/" target="_blank" rel="noopener noreferrer">Prof. Saketha Nath</a>. Before pursuing my PhD, I worked for 4 years as a Research Engineer at Yahoo Labs in Bangalore.</p>
                         
                         <p>My research interests span a wide range of problems in Machine Learning and AI. I've worked on Neural Networks during my Bachelor's project, Reinforcement Learning in my Master's thesis, Data Mining and Entity Matching problems at Yahoo Labs, and focused on Machine Learning models for estimating label aggregates during my PhD.</p>
                         
@@ -123,7 +137,7 @@
             <div class="container">
                 <h2 class="section-title">Publications</h2>
                 <div class="publications-header">
-                    <p class="publications-description">Here are some of my most cited publications. For a complete list, please visit my <a href="https://scholar.google.co.in/citations?user=Ngm0j_EAAAAJ&hl=en" target="_blank">Google Scholar profile</a>.</p>
+                    <p class="publications-description">Here are some of my most cited publications. For a complete list, please visit my <a href="https://scholar.google.co.in/citations?user=Ngm0j_EAAAAJ&hl=en" target="_blank" rel="noopener noreferrer">Google Scholar profile</a>.</p>
                 </div>
                 
                 <div class="publications-grid">
@@ -149,7 +163,7 @@
                             </div>
                         </div>
                         <div class="publication-links">
-                            <a href="https://conf.researchr.org/details/icse-2022/icse-2022-papers/178/Jigsaw-Large-Language-Models-meet-Program-Synthesis" target="_blank" class="publication-link">
+                            <a href="https://conf.researchr.org/details/icse-2022/icse-2022-papers/178/Jigsaw-Large-Language-Models-meet-Program-Synthesis" target="_blank" rel="noopener noreferrer" class="publication-link">
                                 <i class="fas fa-external-link-alt"></i>
                                 ICSE 2022
                             </a>
@@ -178,7 +192,7 @@
                             </div>
                         </div>
                         <div class="publication-links">
-                            <a href="https://doi.org/10.1145/3643757" target="_blank" class="publication-link">
+                            <a href="https://doi.org/10.1145/3643757" target="_blank" rel="noopener noreferrer" class="publication-link">
                                 <i class="fas fa-external-link-alt"></i>
                                 ACM DL
                             </a>
@@ -207,7 +221,7 @@
                             </div>
                         </div>
                         <div class="publication-links">
-                            <a href="https://doi.org/10.1145/3437963.3441746" target="_blank" class="publication-link">
+                            <a href="https://doi.org/10.1145/3437963.3441746" target="_blank" rel="noopener noreferrer" class="publication-link">
                                 <i class="fas fa-external-link-alt"></i>
                                 ACM DL
                             </a>
@@ -236,7 +250,7 @@
                             </div>
                         </div>
                         <div class="publication-links">
-                            <a href="https://proceedings.mlr.press/v32/iyer14.html" target="_blank" class="publication-link">
+                            <a href="https://proceedings.mlr.press/v32/iyer14.html" target="_blank" rel="noopener noreferrer" class="publication-link">
                                 <i class="fas fa-external-link-alt"></i>
                                 PMLR
                             </a>
@@ -265,7 +279,7 @@
                             </div>
                         </div>
                         <div class="publication-links">
-                            <a href="https://doi.org/10.1109/ICDM.2012.161" target="_blank" class="publication-link">
+                            <a href="https://doi.org/10.1109/ICDM.2012.161" target="_blank" rel="noopener noreferrer" class="publication-link">
                                 <i class="fas fa-external-link-alt"></i>
                                 IEEE Xplore
                             </a>
@@ -274,7 +288,7 @@
                 </div>
                 
                 <div class="publications-footer">
-                    <a href="https://scholar.google.co.in/citations?user=Ngm0j_EAAAAJ&hl=en" target="_blank" class="btn btn-secondary">
+                    <a href="https://scholar.google.co.in/citations?user=Ngm0j_EAAAAJ&hl=en" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
                         <i class="fas fa-external-link-alt"></i>
                         View All Publications on Google Scholar
                     </a>
@@ -299,15 +313,15 @@
                         </div>
                         
                         <div class="social-links">
-                            <a href="https://scholar.google.co.in/citations?user=Ngm0j_EAAAAJ&hl=en" target="_blank" class="social-link">
+                            <a href="https://scholar.google.co.in/citations?user=Ngm0j_EAAAAJ&hl=en" target="_blank" rel="noopener noreferrer" class="social-link">
                                 <i class="fas fa-graduation-cap"></i>
                                 <span>Google Scholar</span>
                             </a>
-                            <a href="https://www.linkedin.com/in/iyerarunshankar/" target="_blank" class="social-link">
+                            <a href="https://www.linkedin.com/in/iyerarunshankar/" target="_blank" rel="noopener noreferrer" class="social-link">
                                 <i class="fab fa-linkedin"></i>
                                 <span>LinkedIn</span>
                             </a>
-                            <a href="https://www.microsoft.com/en-us/research/people/ariy/" target="_blank" class="social-link">
+                            <a href="https://www.microsoft.com/en-us/research/people/ariy/" target="_blank" rel="noopener noreferrer" class="social-link">
                                 <i class="fas fa-microscope"></i>
                                 <span>Microsoft Research Profile</span>
                             </a>
