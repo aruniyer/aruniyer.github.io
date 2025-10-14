@@ -812,6 +812,130 @@ a:focus,
     outline-offset: 2px;
 }
 
+/* Blog Styles */
+.blog-content {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.section-description {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-bottom: 3rem;
+}
+
+.blog-posts {
+    display: grid;
+    gap: 2rem;
+}
+
+.blog-post-card {
+    background: var(--background-white);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: 0 4px 12px var(--shadow-light);
+    transition: var(--transition);
+    border: 1px solid var(--border-light);
+}
+
+.blog-post-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px var(--shadow-medium);
+}
+
+.blog-post-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+}
+
+.blog-post-category {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.blog-post-title {
+    margin-bottom: 1rem;
+}
+
+.blog-post-title a {
+    color: var(--text-dark);
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    transition: color 0.3s ease;
+}
+
+.blog-post-title a:hover {
+    color: var(--primary-color);
+}
+
+.blog-post-excerpt {
+    margin-bottom: 1.5rem;
+}
+
+.blog-post-excerpt p {
+    color: var(--text-light);
+    line-height: 1.6;
+}
+
+.blog-post-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.tag {
+    background-color: var(--background-light);
+    color: var(--text-muted);
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid var(--border-light);
+    transition: var(--transition);
+}
+
+.tag:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* Blog responsive design */
+@media (max-width: 768px) {
+    .blog-post-card {
+        padding: 1.5rem;
+    }
+    
+    .blog-post-meta {
+        font-size: 0.85rem;
+    }
+    
+    .blog-post-title a {
+        font-size: 1.3rem;
+    }
+    
+    .blog-post-tags {
+        gap: 0.3rem;
+    }
+    
+    .tag {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+    }
+}
+
 /* Print styles */
 @media print {
     .header,

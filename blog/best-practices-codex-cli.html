@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best Practices for Using Codex CLI and AI Code Generation Tools - Arun Iyer</title>
+    <meta name="description" content="Practical best practices for using OpenAI's Codex CLI and Anthropic's Claude Code as agentic pair-programmers in your development workflow.">
+    <meta property="og:title" content="Best Practices for Using Codex CLI and AI Code Generation Tools">
+    <meta property="og:description" content="Tools like OpenAI's Codex CLI and Anthropic's Claude Code are reshaping how developers work. This guide distills practical best practices for reliable, reviewable output.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://aruniyer.github.io/blog/best-practices-codex-cli.html">
+    <meta property="og:image" content="https://www.cse.iitb.ac.in/~aruniyer/images/intro_self.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Best Practices for Using Codex CLI and AI Code Generation Tools">
+    <meta name="twitter:description" content="Practical best practices for using AI-powered coding assistants effectively.">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .blog-post-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 0 3rem;
+            margin-bottom: 2rem;
+        }
+        
+        .blog-post-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .blog-post-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            line-height: 1.7;
+        }
+        
+        .blog-post-content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+        
+        .blog-post-content h2 {
+            color: var(--primary-color);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+        
+        .blog-post-content h3 {
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.4rem;
+        }
+        
+        .blog-post-content p {
+            margin-bottom: 1.25rem;
+        }
+        
+        .blog-post-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+        
+        .blog-post-content th,
+        .blog-post-content td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .blog-post-content th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .blog-post-content tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .blog-post-content blockquote {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 1.5rem;
+            margin: 1.5rem 0;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .blog-post-content code {
+            background-color: #f4f4f4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .blog-post-content pre {
+            background-color: #f8f8f8;
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .blog-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 3rem 0;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .back-to-blog {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .back-to-blog:hover {
+            color: var(--primary-hover);
+        }
+        
+        .tag-list {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .references {
+            padding-left: 0;
+            counter-reset: ref-counter;
+        }
+        
+        .references li {
+            list-style: none;
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+            position: relative;
+            line-height: 1.5;
+            text-align: justify;
+        }
+        
+        .references li::before {
+            content: "[" counter(ref-counter) "]";
+            counter-increment: ref-counter;
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .references li a {
+            color: var(--primary-color);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--primary-color);
+            word-break: break-all;
+        }
+        
+        .references li a:hover {
+            border-bottom: 1px solid var(--primary-color);
+        }
+        
+        /* Citation links in text */
+        .blog-post-content a[href^="#ref"] {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            padding: 0.1rem 0.2rem;
+            border-radius: 3px;
+        }
+        
+        .blog-post-content a[href^="#ref"]:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Highlight effect when jumping to reference */
+        .references li:target {
+            background-color: rgba(0, 120, 212, 0.1);
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .blog-post-header {
+                padding: 3rem 0 2rem;
+            }
+            
+            .blog-post-content {
+                padding: 0 1rem;
+            }
+            
+            .blog-post-content h1 {
+                font-size: 2rem;
+            }
+            
+            .blog-navigation {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <h1><a href="../index.html" style="color: inherit; text-decoration: none;">Arun Iyer</a></h1>
+                </div>
+                <ul class="nav-menu" id="primary-navigation">
+                    <li><a href="../index.html#about" class="nav-link">About</a></li>
+                    <li><a href="../index.html#research" class="nav-link">Research</a></li>
+                    <li><a href="../index.html#publications" class="nav-link">Publications</a></li>
+                    <li><a href="../index.html#blog" class="nav-link">Blog</a></li>
+                    <li><a href="../index.html#contact" class="nav-link">Contact</a></li>
+                </ul>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="primary-navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <article class="blog-post">
+            <header class="blog-post-header">
+                <div class="container">
+                    <div class="blog-post-content">
+                        <div class="blog-post-meta">
+                            <time datetime="2025-01-14"><i class="fas fa-calendar"></i> January 14, 2025</time>
+                            <span><i class="fas fa-tag"></i> AI Tools</span>
+                            <span><i class="fas fa-clock"></i> 8 min read</span>
+                        </div>
+                        <h1>🚀 Best Practices for Using Codex CLI and AI Code Generation Tools</h1>
+                        <div class="tag-list">
+                            <span class="tag">AI</span>
+                            <span class="tag">Codex</span>
+                            <span class="tag">Claude</span>
+                            <span class="tag">Best Practices</span>
+                            <span class="tag">Developer Tools</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="container">
+                <div class="blog-post-content">
+                    <h2>Introduction</h2>
+                    
+                    <p>Tools like <strong>OpenAI's Codex CLI</strong> and <strong>Anthropic's Claude Code</strong> are reshaping how developers work: they can read, modify, and run code locally, acting as an agentic pair-programmer in your terminal <a href="#ref1">[1]</a>.</p>
+                    
+                    <p>This guide distills practical best practices from official docs, engineering posts, and real-world anecdotes so you can get reliable, reviewable output rather than "AI spaghetti." We use Anthropic's engineering post on Claude Code as a structural reference <a href="#ref2">[2]</a>.</p>
+
+                    <hr>
+
+                    <h2>🧩 1) Customize Your Setup and Context Files</h2>
+
+                    <p><strong>Persist key project context.</strong><br>
+                    Claude Code automatically includes a project file (e.g., a <code>CLAUDE.md</code>) in its prompt context; use it to encode coding conventions, test/run commands, and project quirks. Keep it concise and living in version control so the assistant consistently follows house rules <a href="#ref2">[2]</a>.</p>
+
+                    <p><strong>Codex CLI configuration.</strong><br>
+                    Codex CLI is open-source and runs locally; configure its project settings (e.g., via config files or flags) and keep the repo-level guidance close to the code <a href="#ref1">[1]</a>.</p>
+
+                    <p><strong>Don't overload context.</strong><br>
+                    Over-stuffing the model with giant code dumps degrades focus. Prefer brief, relevant snippets and let the agent fetch what it needs. Anthropic's best-practices emphasize scoped context and iterative refinement <a href="#ref2">[2]</a>.</p>
+
+                    <hr>
+
+                    <h2>🔄 2) Work Iteratively: Plan → Change → Verify</h2>
+
+                    <p><strong>Start with a plan.</strong><br>
+                    Have the agent propose a short plan (5-7 steps) before editing. Then execute small, reviewable diffs (about "a commit's worth") so you can easily test and back out if needed <a href="#ref2">[2]</a>.</p>
+
+                    <p><strong>One intent per iteration.</strong><br>
+                    Avoid mixed patches (bug fix + refactor + style). Keeping a single intent per run yields cleaner diffs and fewer regressions <a href="#ref2">[2]</a>.</p>
+
+                    <p><strong>Verify immediately.</strong><br>
+                    Run tests/builds right after a change ("proximate verification"). If something fails, paste logs back to the agent and let it diagnose or roll back <a href="#ref2">[2]</a>.</p>
+
+                    <hr>
+
+                    <h2>🧠 3) Extend the Agent's Skills (Tools, LSPs, MCP)</h2>
+
+                    <p><strong>Give the agent more tools.</strong><br>
+                    Claude Code inherits your shell environment; you can expose linters, test runners, doc search, or custom scripts, and even run it headlessly in CI <a href="#ref3">[3]</a>.</p>
+
+                    <p><strong>Use MCP for deeper integrations.</strong><br>
+                    Anthropic's <strong>Model Context Protocol</strong> lets you wire secure, two-way connections between tools/data and the model. This is handy for code search, issue trackers, or knowledge bases <a href="#ref4">[4]</a>.</p>
+
+                    <p><strong>Example: LSP-style code understanding.</strong><br>
+                    Community projects like <strong>Serena</strong> demonstrate LSP-like analysis plugged into Claude Code for smarter retrieval/editing in large repos (fewer tokens, better diffs) <a href="#ref5">[5]</a>.</p>
+
+                    <hr>
+
+                    <h2>🧷 4) Choose Autonomy Levels Deliberately</h2>
+
+                    <p><strong>Start conservative.</strong><br>
+                    Keep manual approvals on while you learn the tool's behavior. As trust grows, enable auto-edit for routine refactors in a sandboxed directory. (Claude Code's docs and posts show headless/automation modes; many guides caution against turning approvals fully off on prod repos.) <a href="#ref3">[3]</a></p>
+
+                    <p><strong>Use full-auto sparingly.</strong><br>
+                    Codex CLI and community guides document "full-auto/no-approval" profiles; use them for experiments/CI on throwaway branches, not mainline development. Also note that newer Codex versions introduced safety/permission changes affecting full-auto behavior, so check release notes/discussions <a href="#ref6">[6]</a>.</p>
+
+                    <hr>
+
+                    <h2>🧯 5) Common Pitfalls (and Fixes)</h2>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pitfall</th>
+                                <th>Why it happens</th>
+                                <th>Fix</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Overloading context</td>
+                                <td>Huge dumps dilute attention</td>
+                                <td>Keep prompts scoped; let the agent fetch files as needed <a href="#ref2">[2]</a></td>
+                            </tr>
+                            <tr>
+                                <td>Letting AI design architecture</td>
+                                <td>Agents excel at implementation, not high-level design</td>
+                                <td>You pick the patterns; let the agent implement/test <a href="#ref2">[2]</a></td>
+                            </tr>
+                            <tr>
+                                <td>Bloated, mixed diffs</td>
+                                <td>Scope creep during one run</td>
+                                <td>Enforce one intent per session; split refactors <a href="#ref2">[2]</a></td>
+                            </tr>
+                            <tr>
+                                <td>Ignoring test failures</td>
+                                <td>Silent errors snowball</td>
+                                <td>Paste logs back; iterate or roll back with the agent <a href="#ref2">[2]</a></td>
+                            </tr>
+                            <tr>
+                                <td>Full-auto chaos</td>
+                                <td>No checkpoints/approvals</td>
+                                <td>Use approvals or sandbox; reserve full-auto for CI <a href="#ref3">[3]</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <hr>
+
+                    <h2>📎 6) Real-World Anecdotes & Tips</h2>
+
+                    <ul>
+                        <li><strong>Codex CLI capabilities in the wild.</strong><br>
+                        Community threads summarize what Codex CLI does well: editing files, running commands, working under version control/sandboxing, and using repo docs (e.g., a <code>codex.md</code>) for extra context <a href="#ref7">[7]</a>.</li>
+                        
+                        <li><strong>Agent discipline over "magic prompts."</strong><br>
+                        Developers emphasize disciplined workflows (small plans, tight loops, immediate tests) over one-shot prompts as the real productivity unlock. (Recurring theme across best-practices and agent forums.) <a href="#ref2">[2]</a>, <a href="#ref8">[8]</a></li>
+                        
+                        <li><strong>Headless/CI usage.</strong><br>
+                        Claude Code supports headless mode so you can wire it into pre-commit hooks, CI, and build scripts. This provides a practical path to safe automation <a href="#ref3">[3]</a>.</li>
+                    </ul>
+
+                    <hr>
+
+                    <h2>🧭 Conclusion</h2>
+
+                    <p>Treat CLI coding agents as <strong>junior pair-programmers</strong>: give them crisp context (<code>CLAUDE.md</code>/config), insist on small, testable steps, and turn up autonomy only in safe, reversible environments. Do that, and tools like <strong>Codex CLI</strong> and <strong>Claude Code</strong> can take on the grind while you stay focused on design and quality <a href="#ref1">[1]</a>.</p>
+
+                    <hr>
+
+                    <h2>References</h2>
+
+                    <ol class="references">
+                        <li id="ref1">OpenAI. "Codex CLI Documentation." OpenAI Developer Platform, 2025. Available: <a href="https://developers.openai.com/codex/cli/" target="_blank" rel="noopener noreferrer">https://developers.openai.com/codex/cli/</a></li>
+                        
+                        <li id="ref2">Anthropic Engineering Team. "Claude Code: Best practices for agentic coding." Anthropic Technical Blog, 2025. Available: <a href="https://www.anthropic.com/engineering/claude-code-best-practices" target="_blank" rel="noopener noreferrer">https://www.anthropic.com/engineering/claude-code-best-practices</a></li>
+                        
+                        <li id="ref3">Anthropic. "Claude Code Headless Mode Documentation." Claude Documentation, 2025. Available: <a href="https://docs.claude.com/en/docs/claude-code/headless" target="_blank" rel="noopener noreferrer">https://docs.claude.com/en/docs/claude-code/headless</a></li>
+                        
+                        <li id="ref4">Anthropic. "Introducing the Model Context Protocol (MCP)." Anthropic News, 2025. Available: <a href="https://www.anthropic.com/news/model-context-protocol" target="_blank" rel="noopener noreferrer">https://www.anthropic.com/news/model-context-protocol</a></li>
+                        
+                        <li id="ref5">Oraios. "Serena: A powerful coding agent toolkit." GitHub Repository, 2025. Available: <a href="https://github.com/oraios/serena" target="_blank" rel="noopener noreferrer">https://github.com/oraios/serena</a></li>
+                        
+                        <li id="ref6">SmartScope. "Codex CLI No Approval Setup: Full-Auto & Claude Integration." SmartScope Blog, 2025. Available: <a href="https://smartscope.blog/en/generative-ai/chatgpt/codex-cli-approval-modes-no-approval/" target="_blank" rel="noopener noreferrer">https://smartscope.blog/en/generative-ai/chatgpt/codex-cli-approval-modes-no-approval/</a></li>
+                        
+                        <li id="ref7">Reddit Community. "OpenAI releases Codex CLI, an AI coding assistant built for developers." r/singularity, 2025. Available: <a href="https://www.reddit.com/r/singularity/comments/1k0qc67/openai_releases_codex_cli_an_ai_coding_assistant/" target="_blank" rel="noopener noreferrer">https://www.reddit.com/r/singularity/comments/1k0qc67/</a></li>
+                        
+                        <li id="ref8">Reddit Community. "Best practices for coding AI agents?" r/AI_Agents, 2025. Available: <a href="https://www.reddit.com/r/AI_Agents/comments/1k7okkg/best_practices_for_coding_ai_agents/" target="_blank" rel="noopener noreferrer">https://www.reddit.com/r/AI_Agents/comments/1k7okkg/</a></li>
+                    </ol>
+
+                    <div class="blog-navigation">
+                        <a href="../index.html#blog" class="back-to-blog">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Blog
+                        </a>
+                        <div class="tag-list">
+                            <span class="tag">AI</span>
+                            <span class="tag">Codex</span>
+                            <span class="tag">Claude</span>
+                            <span class="tag">Best Practices</span>
+                            <span class="tag">Developer Tools</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Arun Iyer. All rights reserved.</p>
+            <p>Last updated: January 2025</p>
+        </div>
+    </footer>
+
+    <script src="../script.js"></script>
+</body>
+</html>
