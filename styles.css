@@ -936,6 +936,35 @@ a:focus,
     }
 }
 
+/* Dark mode code block styling */
+body.dark-theme code {
+    background-color: #2d2d2d;
+    color: #e8e8e8;
+}
+
+body.dark-theme pre {
+    background-color: #2d2d2d;
+}
+
+body.dark-theme pre code {
+    background-color: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+    body:not(.light-forced) code {
+        background-color: #2d2d2d;
+        color: #e8e8e8;
+    }
+    
+    body:not(.light-forced) pre {
+        background-color: #2d2d2d;
+    }
+    
+    body:not(.light-forced) pre code {
+        background-color: transparent;
+    }
+}
+
 /* Print styles */
 @media print {
     .header,
