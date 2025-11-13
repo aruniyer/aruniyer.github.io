@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instruction Files for AI Coding Assistants: An Overview - Arun Iyer</title>
+    <meta name="description" content="Learn how to use instruction files like AGENTS.md, CLAUDE.md, and CODEX.md effectively for AI coding assistants, including what they do, what belongs in them, and best practices.">
+    <meta property="og:title" content="Instruction Files for AI Coding Assistants: An Overview">
+    <meta property="og:description" content="Understanding AGENTS.md, CLAUDE.md, and CODEX.md for AI coding assistants">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://aruniyer.github.io/blog/agents-md-instruction-files.html">
+    <meta property="og:image" content="https://www.cse.iitb.ac.in/~aruniyer/images/intro_self.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Instruction Files for AI Coding Assistants: An Overview">
+    <meta name="twitter:description" content="Understanding AGENTS.md, CLAUDE.md, and CODEX.md for AI coding assistants">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .blog-post-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 0 3rem;
+            margin-bottom: 2rem;
+        }
+        
+        .blog-post-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .blog-post-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            line-height: 1.7;
+        }
+        
+        .blog-post-content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+        
+        .blog-post-content h2 {
+            color: var(--primary-color);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+        
+        .blog-post-content h3 {
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.4rem;
+        }
+        
+        .blog-post-content h4 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .blog-post-content p {
+            margin-bottom: 1.25rem;
+        }
+        
+        .blog-post-content ul,
+        .blog-post-content ol {
+            margin-bottom: 1.25rem;
+            padding-left: 2rem;
+        }
+        
+        .blog-post-content li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .blog-post-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+        
+        .blog-post-content th,
+        .blog-post-content td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .blog-post-content th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .blog-post-content tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .blog-post-content blockquote {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 1.5rem;
+            margin: 1.5rem 0;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .blog-post-content code {
+            background-color: #f4f4f4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .blog-post-content pre {
+            background-color: #f8f8f8;
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .blog-post-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        
+        .blog-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 3rem 0;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .back-to-blog {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .back-to-blog:hover {
+            color: var(--primary-hover);
+        }
+        
+        .tag-list {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .references {
+            padding-left: 0;
+            counter-reset: ref-counter;
+        }
+        
+        .references li {
+            list-style: none;
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+            position: relative;
+            line-height: 1.5;
+            text-align: justify;
+        }
+        
+        .references li::before {
+            content: "[" counter(ref-counter) "]";
+            counter-increment: ref-counter;
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .references li a {
+            color: var(--primary-color);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--primary-color);
+            word-break: break-all;
+        }
+        
+        .references li a:hover {
+            border-bottom: 1px solid var(--primary-color);
+        }
+        
+        /* Citation links in text */
+        .blog-post-content a[href^="#ref"] {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            padding: 0.1rem 0.2rem;
+            border-radius: 3px;
+        }
+        
+        .blog-post-content a[href^="#ref"]:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Highlight effect when jumping to reference */
+        .references li:target {
+            background-color: rgba(0, 120, 212, 0.1);
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        
+        .warning-box {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 768px) {
+            .blog-post-header {
+                padding: 3rem 0 2rem;
+            }
+            
+            .blog-post-content {
+                padding: 0 1rem;
+            }
+            
+            .blog-post-content h1 {
+                font-size: 2rem;
+            }
+            
+            .blog-navigation {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <h1><a href="../index.html" style="color: inherit; text-decoration: none;">Arun Iyer</a></h1>
+                </div>
+                <ul class="nav-menu" id="primary-navigation">
+                    <li><a href="../index.html#about" class="nav-link">About</a></li>
+                    <li><a href="../index.html#research" class="nav-link">Research</a></li>
+                    <li><a href="../index.html#publications" class="nav-link">Publications</a></li>
+                    <li><a href="../index.html#blog" class="nav-link">Blog</a></li>
+                    <li><a href="../index.html#contact" class="nav-link">Contact</a></li>
+                </ul>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="primary-navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <article class="blog-post">
+            <header class="blog-post-header">
+                <div class="container">
+                    <div class="blog-post-content">
+                        <div class="blog-post-meta">
+                            <time datetime="2025-11-13"><i class="fas fa-calendar"></i> November 13, 2025</time>
+                            <span><i class="fas fa-tag"></i> AI Tools</span>
+                            <span><i class="fas fa-clock"></i> 12 min read</span>
+                        </div>
+                        <h1>📝 Instruction Files for AI Coding Assistants: An Overview</h1>
+                        <div class="tag-list">
+                            <span class="tag">AI</span>
+                            <span class="tag">AGENTS.md</span>
+                            <span class="tag">CLAUDE.md</span>
+                            <span class="tag">CODEX.md</span>
+                            <span class="tag">Best Practices</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="container">
+                <div class="blog-post-content">
+                    <p>AI coding assistants such as Codex CLI, Claude Code, Cursor, Continue, and others increasingly rely on <strong>instruction files</strong> - special Markdown documents placed inside your repo to give these agents persistent project-specific context. If you've used tools like <code>codex-cli</code> or <code>claude code</code>, you may have seen files such as:</p>
+
+                    <ul>
+                        <li><code>AGENTS.md</code></li>
+                        <li><code>CLAUDE.md</code></li>
+                        <li><code>CODEX.md</code></li>
+                    </ul>
+
+                    <p>At first glance they look like glorified READMEs. But they're not.
+                    These files act as <strong>agent-facing operational guides</strong> - a persistent memory layer that modern LLM-powered coding agents load <em>before</em> they start generating or editing code.</p>
+
+                    <p>This blog explains:</p>
+                    <ul>
+                        <li>what these instruction files do</li>
+                        <li>what belongs inside them</li>
+                        <li>when <em>task-specific</em> instructions are appropriate</li>
+                        <li>best practices supported by docs, blog posts, and community usage patterns</li>
+                    </ul>
+
+                    <hr>
+
+                    <h2>📋 1) What AGENTS.md / CLAUDE.md Actually Do</h2>
+
+                    <p>Modern agentic coding systems read these files automatically when working inside your project.</p>
+
+                    <h3>They act as:</h3>
+                    <ul>
+                        <li><strong>persistent onboarding guides</strong></li>
+                        <li><strong>coding conventions repositories</strong></li>
+                        <li><strong>operational workflow documents</strong></li>
+                        <li><strong>architecture summaries</strong></li>
+                    </ul>
+
+                    <p>Factory's AGENTS.md documentation describes it as:</p>
+
+                    <blockquote>
+                        "A simple, open format for guiding coding agents... used by many open-source projects" <a href="#ref1">[1]</a>
+                    </blockquote>
+
+                    <p>Claude Code similarly loads <code>CLAUDE.md</code> automatically from the repo root, parent directories, and relevant child directories:</p>
+
+                    <blockquote>
+                        "Claude Code reads CLAUDE.md files recursively from parent directories and the project root." <a href="#ref2">[2]</a>
+                    </blockquote>
+
+                    <p>Codex CLI historically used <code>INSTRUCTIONS.md</code> or <code>CODEX.md</code>, and has now aligned toward <code>AGENTS.md</code>.</p>
+
+                    <p>Reddit discussions confirm the transition:</p>
+
+                    <blockquote>
+                        "Codex used CODEX.md previously; AGENTS.md is now the unified format." <a href="#ref3">[3]</a>
+                    </blockquote>
+
+                    <p>These files are loaded <em>before</em> the model produces any output. They act like a <strong>role definition, architectural map, and workflow guide</strong> for the agent.</p>
+
+                    <hr>
+
+                    <h2>📝 2) What Typically Goes Into These Files</h2>
+
+                    <p>Across public examples and in production usage, the contents usually include:</p>
+
+                    <h3>2.1 Build, Test & Lint Commands</h3>
+
+                    <pre><code>npm install
+npm run build
+npm run lint
+npm test</code></pre>
+
+                    <h3>2.2 Project Structure & Architecture</h3>
+                    <ul>
+                        <li>What lives in <code>src/</code>, <code>components/</code>, <code>api/</code>, etc.</li>
+                        <li>Where tests live</li>
+                        <li>Which directories contain legacy code</li>
+                    </ul>
+
+                    <h3>2.3 Coding Style & Conventions</h3>
+                    <ul>
+                        <li>folder structure</li>
+                        <li>naming conventions</li>
+                        <li>React/Angular/Flask coding style</li>
+                        <li>language-specific preferences (TypeScript strictness, Python PEP8, etc.)</li>
+                    </ul>
+
+                    <h3>2.4 Environment Setup</h3>
+                    <ul>
+                        <li>pyenv/node version</li>
+                        <li>required tooling</li>
+                        <li>common scripts</li>
+                    </ul>
+
+                    <h3>2.5 Git / PR Workflows</h3>
+
+                    <p>Many teams include PR workflows:</p>
+
+                    <pre><code>PR Workflow:
+1. Create a feature branch.
+2. Run lint & tests.
+3. Write a summary using PR_SUMMARY.md template.
+4. Do not commit generated files.</code></pre>
+
+                    <p>This matches the findings from the empirical study on real-world agent manifests:</p>
+
+                    <blockquote>
+                        "Manifests are dominated by operational commands, architectural notes, and workflow conventions." <a href="#ref4">[4]</a>
+                    </blockquote>
+
+                    <div class="info-box">
+                        <strong>In short:</strong> These files are for <strong>persistent, reusable, project-level knowledge</strong>.
+                    </div>
+
+                    <hr>
+
+                    <h2>🎯 3) Are Task-Specific Instructions Allowed?</h2>
+
+                    <p>Yes — but <strong>with guardrails</strong>.</p>
+
+                    <p>This is a point of confusion for many users.</p>
+
+                    <h3>Allowed (and common)</h3>
+
+                    <p><strong>When the "task" is a <em>repeatable workflow</em>:</strong></p>
+
+                    <p>Examples:</p>
+                    <ul>
+                        <li>PR generation steps</li>
+                        <li>Component creation workflow</li>
+                        <li>Rules for adding a new model/schema</li>
+                        <li>Data-cleaning rules for a particular domain</li>
+                        <li>API versioning workflow</li>
+                        <li>UI theming conventions</li>
+                    </ul>
+
+                    <p>These "tasks" are actually <strong>stable workflows</strong>, and many teams encode them into AGENTS.md so the AI executes them consistently.</p>
+
+                    <h3>Not recommended</h3>
+
+                    <p><strong>One-off tasks, like a single ticket or bugfix.</strong></p>
+
+                    <div class="warning-box">
+                        <strong>Bad example:</strong>
+                        <pre><code>Fix issue #166 by replacing foo() with bar()</code></pre>
+                        This pollutes long-term context and misleads future sessions.
+                    </div>
+
+                    <hr>
+
+                    <h2>🗂️ 4) How Instruction Hierarchy Works</h2>
+
+                    <p>Instruction files can exist at several layers:</p>
+
+                    <h3>4.1 Global (User-Level)</h3>
+
+                    <pre><code>~/.claude/CLAUDE.md
+~/.codex/AGENTS.md</code></pre>
+
+                    <p>Used for your personal workflow rules:</p>
+                    <ul>
+                        <li>indentation preferences</li>
+                        <li>editor conventions</li>
+                        <li>global safety rules</li>
+                    </ul>
+
+                    <h3>4.2 Project-Root Level</h3>
+
+                    <p><code>AGENTS.md</code> or <code>CLAUDE.md</code> in repo root.</p>
+
+                    <p>This is the <strong>primary place</strong> to store:</p>
+                    <ul>
+                        <li>build instructions</li>
+                        <li>code conventions</li>
+                        <li>repo architecture</li>
+                        <li>PR workflows</li>
+                    </ul>
+
+                    <div class="info-box">
+                        <strong>This is the most important file.</strong>
+                    </div>
+
+                    <h3>4.3 Folder-Level (Nested Files)</h3>
+
+                    <p>Claude explicitly supports nested hierarchy:</p>
+
+                    <blockquote>
+                        "You can place CLAUDE.md files in parent directories or child directories related to the file being edited." <a href="#ref2">[2]</a>
+                    </blockquote>
+
+                    <p>Factory's AGENTS.md supports similar hierarchical overrides:</p>
+
+                    <blockquote>
+                        "The closest AGENTS.md file wins." <a href="#ref5">[5]</a>
+                    </blockquote>
+
+                    <p>This is perfect for monorepos or multi-surface codebases.</p>
+
+                    <hr>
+
+                    <h2>💡 5) What Goes in Files vs. Prompts</h2>
+
+                    <p>Across production repositories and community practices, a clear pattern emerges for what belongs in instruction files versus prompts:</p>
+
+                    <div class="info-box">
+                        <strong>Repetitive or non-task-specific instructions → instruction files (AGENTS.md, CLAUDE.md)<br>
+                        One-off or single-session information → keep in the prompt</strong>
+                    </div>
+
+                    <p>This separation ensures that instruction files remain focused on persistent, reusable knowledge while keeping prompts flexible for immediate, contextual needs. The distinction helps maintain clean project documentation that stays relevant over time.</p>
+
+                    <hr>
+
+                    <h2>📁 6) Recommended Structure</h2>
+
+                    <pre><code>/
+  AGENTS.md
+  src/
+    frontend/
+      AGENTS.md   ← local overrides
+    backend/
+      AGENTS.md
+~/.claude/
+  CLAUDE.local.md ← personal, not committed</code></pre>
+
+                    <p>This hierarchical layout is documented in multiple sources <a href="#ref6">[6]</a> <a href="#ref7">[7]</a> and commonly used in production monorepos. The pattern allows for:</p>
+                    
+                    <ul>
+                        <li><strong>Root-level guidance</strong> that applies across the entire project</li>
+                        <li><strong>Package-specific overrides</strong> where subdirectories have unique requirements</li>
+                        <li><strong>Personal preferences</strong> kept in home directory configuration files</li>
+                    </ul>
+
+                    <p>Agents automatically read the nearest AGENTS.md file in the directory tree, with closer files taking precedence. For example, the OpenAI repository itself uses 88 nested AGENTS.md files <a href="#ref1">[1]</a>.</p>
+
+                    <hr>
+
+                    <h2>🎓 7) Conclusion</h2>
+
+                    <p>Instruction files like <code>AGENTS.md</code>, <code>CLAUDE.md</code>, and <code>CODEX.md</code> are not documentation for <em>humans</em> - they're <strong>documentation for your AI teammate</strong>. They act as the agent's onboarding manual, the place where you define the rules, workflows, and architectural knowledge it needs to operate effectively.</p>
+
+                    <p>When used well, these files dramatically improve:</p>
+                    <ul>
+                        <li>consistency</li>
+                        <li>correctness</li>
+                        <li>architectural alignment</li>
+                        <li>workflow reliability</li>
+                    </ul>
+
+                    <p>The key is knowing <em>where</em> each type of instruction belongs.</p>
+
+                    <ul>
+                        <li>Global rules go into the root file.</li>
+                        <li>Workflow rules belong there too.</li>
+                        <li>Migration rules get their own temporary file.</li>
+                        <li>One-off tasks stay in the prompt.</li>
+                    </ul>
+
+                    <p>Master this structure, and your AI coding assistant will behave like a real teammate, not a hallucinating intern.</p>
+
+                    <hr>
+
+                    <h2>References</h2>
+
+                    <ol class="references">
+                        <li id="ref1">Factory AI. "AGENTS.md - Open Format for Guiding Coding Agents." Available: <a href="https://agents.md/" target="_blank" rel="noopener noreferrer">https://agents.md/</a></li>
+                        
+                        <li id="ref2">Anthropic Engineering Team. "Claude Code: Best Practices." Anthropic Technical Blog, 2025. Available: <a href="https://www.anthropic.com/engineering/claude-code-best-practices" target="_blank" rel="noopener noreferrer">https://www.anthropic.com/engineering/claude-code-best-practices</a></li>
+                        
+                        <li id="ref3">Reddit Community. "AGENTS.md, CODEX.md, INSTRUCTIONS.md, CLAUDE.md." r/OpenAI, 2025. Available: <a href="https://www.reddit.com/r/OpenAI/comments/1n8r8tp/agentsmd_codexmd_instructionsmd_claudemd/" target="_blank" rel="noopener noreferrer">https://www.reddit.com/r/OpenAI/comments/1n8r8tp/</a></li>
+                        
+                        <li id="ref4">"On the Use of Agentic Coding Manifests - Empirical Study." ArXiv, 2025. Available: <a href="https://arxiv.org/abs/2509.14744" target="_blank" rel="noopener noreferrer">https://arxiv.org/abs/2509.14744</a></li>
+                        
+                        <li id="ref5">Factory AI. "AGENTS.md Configuration Documentation." Factory AI CLI Docs, 2025. Available: <a href="https://docs.factory.ai/cli/configuration/agents-md/" target="_blank" rel="noopener noreferrer">https://docs.factory.ai/cli/configuration/agents-md/</a></li>
+                        
+                        <li id="ref6">Medium. "AGENTS.md: The New README for AI Coding Agents." 2025. Available: <a href="https://medium.com/@algorythmos/agents-md-the-new-readme-for-ai-coding-agents-713828c5c63b" target="_blank" rel="noopener noreferrer">https://medium.com/@algorythmos/agents-md-the-new-readme-for-ai-coding-agents-713828c5c63b</a></li>
+                        
+                        <li id="ref7">Dev.to. "Steering AI Agents in Monorepos with AGENTS.md." Datadog Frontend Engineering, 2025. Available: <a href="https://dev.to/datadog-frontend-dev/steering-ai-agents-in-monorepos-with-agentsmd-13g0" target="_blank" rel="noopener noreferrer">https://dev.to/datadog-frontend-dev/steering-ai-agents-in-monorepos-with-agentsmd-13g0</a></li>
+                    </ol>
+
+                    <div class="blog-navigation">
+                        <a href="../index.html#blog" class="back-to-blog">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Blog
+                        </a>
+                        <div class="tag-list">
+                            <span class="tag">AI</span>
+                            <span class="tag">AGENTS.md</span>
+                            <span class="tag">CLAUDE.md</span>
+                            <span class="tag">CODEX.md</span>
+                            <span class="tag">Best Practices</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Arun Iyer. All rights reserved.</p>
+            <p>Last updated: November 2025</p>
+        </div>
+    </footer>
+
+    <script src="../script.js"></script>
+</body>
+</html>
