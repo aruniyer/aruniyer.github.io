@@ -133,6 +133,43 @@
             padding: 0;
         }
         
+        /* Dark mode styles for code blocks */
+        body.dark-theme .blog-post-content code {
+            background-color: #2d2d2d;
+            color: #e8e8e8;
+        }
+        
+        body.dark-theme .blog-post-content pre {
+            background-color: #2d2d2d;
+        }
+        
+        body.dark-theme .blog-post-content pre code {
+            background-color: transparent;
+        }
+        
+        body.dark-theme .blog-post-content tr:hover {
+            background-color: #2a2a2a;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body:not(.light-forced) .blog-post-content code {
+                background-color: #2d2d2d;
+                color: #e8e8e8;
+            }
+            
+            body:not(.light-forced) .blog-post-content pre {
+                background-color: #2d2d2d;
+            }
+            
+            body:not(.light-forced) .blog-post-content pre code {
+                background-color: transparent;
+            }
+            
+            body:not(.light-forced) .blog-post-content tr:hover {
+                background-color: #2a2a2a;
+            }
+        }
+        
         .blog-navigation {
             display: flex;
             justify-content: space-between;
@@ -249,6 +286,95 @@
             padding: 1rem 1.5rem;
             margin: 1.5rem 0;
             border-radius: 4px;
+        }
+        
+        /* Dark mode styles for info/warning boxes */
+        body.dark-theme .info-box {
+            background-color: #1a2332;
+            border-left-color: #64b5f6;
+            color: var(--text-light);
+        }
+        
+        body.dark-theme .warning-box {
+            background-color: #2d2416;
+            border-left-color: #ffb74d;
+            color: var(--text-light);
+        }
+        
+        /* Dark mode styles for code blocks */
+        body.dark-theme .blog-post-content code {
+            background-color: #2d2d2d;
+            color: #e8e8e8;
+        }
+        
+        body.dark-theme .blog-post-content pre {
+            background-color: #2d2d2d;
+        }
+        
+        body.dark-theme .blog-post-content pre code {
+            background-color: transparent;
+        }
+        
+        body.dark-theme .blog-post-content tr:hover {
+            background-color: #2a2a2a;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body:not(.light-forced) .info-box {
+                background-color: #1a2332;
+                border-left-color: #64b5f6;
+                color: var(--text-light);
+            }
+            
+            body:not(.light-forced) .warning-box {
+                background-color: #2d2416;
+                border-left-color: #ffb74d;
+                color: var(--text-light);
+            }
+            
+            body:not(.light-forced) .blog-post-content code {
+                background-color: #2d2d2d;
+                color: #e8e8e8;
+            }
+            
+            body:not(.light-forced) .blog-post-content pre {
+                background-color: #2d2d2d;
+            }
+            
+            body:not(.light-forced) .blog-post-content pre code {
+                background-color: transparent;
+            }
+            
+            body:not(.light-forced) .blog-post-content tr:hover {
+                background-color: #2a2a2a;
+            }
+        }
+        
+        @media (max-width: 768px) {
+        body.dark-theme .info-box {
+            background-color: #1a2332;
+            border-left-color: #64b5f6;
+            color: var(--text-light);
+        }
+        
+        body.dark-theme .warning-box {
+            background-color: #2d2416;
+            border-left-color: #ffb74d;
+            color: var(--text-light);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body:not(.light-forced) .info-box {
+                background-color: #1a2332;
+                border-left-color: #64b5f6;
+                color: var(--text-light);
+            }
+            
+            body:not(.light-forced) .warning-box {
+                background-color: #2d2416;
+                border-left-color: #ffb74d;
+                color: var(--text-light);
+            }
         }
         
         @media (max-width: 768px) {
