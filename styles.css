@@ -426,6 +426,16 @@ body.dark-theme .research-card { background: #1e1e1e; }
     margin-bottom: 2rem;
 }
 
+.publications-subsection-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-color);
+    display: inline-block;
+}
+
 .publication-card {
     background: var(--background-white);
     border: 1px solid var(--border-light);
