@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chow–Liu Ordering for Long-Context Reasoning in Chain-of-Agents - Arun Iyer</title>
+    <meta name="description" content="A dependency-aware chunk ordering strategy based on Chow–Liu trees that consistently improves long-context reasoning in Chain-of-Agents pipelines.">
+    <meta property="og:title" content="Chow–Liu Ordering for Long-Context Reasoning in Chain-of-Agents">
+    <meta property="og:description" content="Using Chow–Liu trees to order chunks for sequential multi-agent reasoning over long contexts. Accepted at ICLR 2026 MemAgent Workshop.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://aruniyer.github.io/blog/chow-liu-long-context.html">
+    <meta property="og:image" content="https://aruniyer.github.io/blog/images/chowliu.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Chow–Liu Ordering for Long-Context Reasoning in Chain-of-Agents">
+    <meta name="twitter:description" content="Dependency-aware chunk ordering for Chain-of-Agents. ICLR 2026 MemAgent Workshop.">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- MathJax for equations -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+    <style>
+        .paper-hero {
+            background: linear-gradient(135deg, #1e3a8a 0%, #6d28d9 100%);
+            color: white;
+            padding: 4rem 0 3rem;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .paper-hero h1 {
+            font-size: 2.25rem;
+            line-height: 1.25;
+            max-width: 900px;
+            margin: 0 auto 1.25rem;
+            font-weight: 700;
+        }
+
+        .paper-authors {
+            font-size: 1rem;
+            line-height: 1.8;
+            max-width: 900px;
+            margin: 0 auto 0.75rem;
+            opacity: 0.95;
+        }
+
+        .paper-authors .corresponding {
+            font-weight: 600;
+            text-decoration: underline;
+        }
+
+        .paper-affiliations {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .paper-venue {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .paper-venue .badge {
+            color: #fbbf24;
+        }
+
+        .paper-links {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .paper-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        .paper-link-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .paper-content {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem;
+            line-height: 1.75;
+        }
+
+        .paper-content h2 {
+            color: var(--primary-color);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .paper-content h3 {
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.3rem;
+        }
+
+        .paper-content p {
+            margin-bottom: 1.1rem;
+            text-align: justify;
+        }
+
+        .paper-figure {
+            margin: 2rem auto;
+            text-align: center;
+        }
+
+        .paper-figure img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .figure-caption {
+            font-size: 0.9rem;
+            color: #4b5563;
+            max-width: 780px;
+            margin: 0.75rem auto 0;
+            line-height: 1.55;
+            text-align: justify;
+        }
+
+        .tldr-box {
+            background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+            border-left: 4px solid #6366f1;
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0 2rem;
+            border-radius: 6px;
+        }
+
+        .tldr-box strong {
+            color: #4338ca;
+        }
+
+        body.dark-theme .tldr-box {
+            background: #1f2540;
+            color: var(--text-light);
+        }
+
+        .results-table-wrap {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 0.65rem 0.7rem;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: center;
+        }
+
+        .results-table thead th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .results-table th:first-child,
+        .results-table td:first-child {
+            text-align: left;
+        }
+
+        .results-table .group-head {
+            background-color: #eef2ff;
+            color: #4338ca;
+            font-weight: 600;
+        }
+
+        .results-table .cl-col {
+            background-color: #f5f3ff;
+            font-weight: 600;
+            color: #4338ca;
+        }
+
+        body.dark-theme .results-table thead th {
+            background-color: #2d2d2d;
+            color: var(--text-light);
+        }
+
+        body.dark-theme .results-table th,
+        body.dark-theme .results-table td {
+            border-bottom-color: #3a3a3a;
+        }
+
+        body.dark-theme .results-table .group-head {
+            background-color: #2a2a4a;
+            color: #a5b4fc;
+        }
+
+        body.dark-theme .results-table .cl-col {
+            background-color: #2a223a;
+            color: #c4b5fd;
+        }
+
+        .equation-block {
+            background: #f9fafb;
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+
+        body.dark-theme .equation-block {
+            background: #2a2a2a;
+        }
+
+        .key-idea-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .key-idea-card {
+            background: #fafafa;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+
+        .key-idea-card .step {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #6366f1;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .key-idea-card h4 {
+            margin: 0.4rem 0 0.6rem;
+            font-size: 1.05rem;
+        }
+
+        .key-idea-card p {
+            margin: 0;
+            font-size: 0.92rem;
+            color: #4b5563;
+            text-align: left;
+        }
+
+        body.dark-theme .key-idea-card {
+            background: #1f1f1f;
+            border-color: #3a3a3a;
+        }
+
+        body.dark-theme .key-idea-card p {
+            color: #cbd5e1;
+        }
+
+        /* Pseudocode / algorithm block */
+        .algorithm-box {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            margin: 1.5rem 0 0.75rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        .algorithm-header {
+            background: #eef2ff;
+            color: #4338ca;
+            padding: 0.6rem 1.1rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #d1d5db;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .algorithm-header .algo-subtitle {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #4b5563;
+        }
+
+        .algorithm-body {
+            padding: 1rem 1.25rem 1.1rem;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 0.88rem;
+            line-height: 1.65;
+            color: #1f2937;
+        }
+
+        .algorithm-body .io-line {
+            display: flex;
+            gap: 0.6rem;
+            padding: 0.1rem 0;
+        }
+
+        .algorithm-body .io-label {
+            font-weight: 700;
+            color: #4338ca;
+            min-width: 4.5rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .algorithm-body ol.algo-steps {
+            counter-reset: algo;
+            list-style: none;
+            margin: 0.75rem 0 0;
+            padding: 0;
+            border-top: 1px dashed #e5e7eb;
+            padding-top: 0.75rem;
+        }
+
+        .algorithm-body ol.algo-steps > li {
+            counter-increment: algo;
+            position: relative;
+            padding: 0.15rem 0 0.15rem 2.4rem;
+        }
+
+        .algorithm-body ol.algo-steps > li::before {
+            content: counter(algo) ":";
+            position: absolute;
+            left: 0;
+            top: 0.15rem;
+            font-weight: 700;
+            color: #9ca3af;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            width: 2rem;
+            text-align: right;
+        }
+
+        .algorithm-body .kw {
+            color: #c2410c;
+            font-weight: 700;
+        }
+
+        .algorithm-body .cmt {
+            color: #6b7280;
+            font-style: italic;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+        }
+
+        .algorithm-body ol.algo-steps ol {
+            counter-reset: algo;
+            list-style: none;
+            margin: 0.1rem 0 0.1rem 0.5rem;
+            padding: 0;
+        }
+
+        .algorithm-body ol.algo-steps ol > li {
+            counter-increment: algo;
+            position: relative;
+            padding-left: 2.2rem;
+        }
+
+        .algorithm-body ol.algo-steps ol > li::before {
+            content: counter(algo, lower-alpha) ".";
+            position: absolute;
+            left: 0.6rem;
+            top: 0;
+            color: #9ca3af;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+        }
+
+        body.dark-theme .algorithm-box {
+            background: #1f1f1f;
+            border-color: #3a3a3a;
+        }
+
+        body.dark-theme .algorithm-header {
+            background: #2a2a4a;
+            color: #a5b4fc;
+            border-bottom-color: #3a3a3a;
+        }
+
+        body.dark-theme .algorithm-header .algo-subtitle {
+            color: #94a3b8;
+        }
+
+        body.dark-theme .algorithm-body {
+            color: #e5e7eb;
+        }
+
+        body.dark-theme .algorithm-body .io-label {
+            color: #a5b4fc;
+        }
+
+        body.dark-theme .algorithm-body .kw {
+            color: #fdba74;
+        }
+
+        body.dark-theme .algorithm-body .cmt {
+            color: #94a3b8;
+        }
+
+        body.dark-theme .algorithm-body ol.algo-steps {
+            border-top-color: #3a3a3a;
+        }
+
+        .blog-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 3rem 0 1rem;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        body.dark-theme .blog-navigation {
+            background-color: #1f1f1f;
+        }
+
+        .back-to-blog {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .tag-list {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .bibtex-block {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 1.25rem 1.5rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.55;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        @media (max-width: 768px) {
+            .paper-hero h1 {
+                font-size: 1.6rem;
+            }
+
+            .paper-content {
+                padding: 2rem 1rem;
+            }
+
+            .blog-navigation {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <h1><a href="../index.html" style="color: inherit; text-decoration: none;">Arun Iyer</a></h1>
+                </div>
+                <ul class="nav-menu" id="primary-navigation">
+                    <li><a href="../index.html#about" class="nav-link">About</a></li>
+                    <li><a href="../index.html#research" class="nav-link">Research</a></li>
+                    <li><a href="../index.html#publications" class="nav-link">Publications</a></li>
+                    <li><a href="../index.html#blog" class="nav-link">Blog</a></li>
+                    <li><a href="../index.html#contact" class="nav-link">Contact</a></li>
+                </ul>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="primary-navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <article class="blog-post">
+            <header class="paper-hero">
+                <div class="container">
+                    <h1>Chow–Liu Ordering for Long-Context Reasoning in Chain-of-Agents</h1>
+                    <div class="paper-authors">
+                        Naman Gupta &nbsp;&middot;&nbsp;
+                        Vaibhav Singh &nbsp;&middot;&nbsp;
+                        <span class="corresponding">Arun Iyer</span> &nbsp;&middot;&nbsp;
+                        Kirankumar Shiragur &nbsp;&middot;&nbsp;
+                        Pratham Grover &nbsp;&middot;&nbsp;
+                        Ramakrishna B Bairi &nbsp;&middot;&nbsp;
+                        Ritabrata Maiti &nbsp;&middot;&nbsp;
+                        Sankarshan Damle &nbsp;&middot;&nbsp;
+                        Shachee Mishra Gupta &nbsp;&middot;&nbsp;
+                        Rishikesh Maurya &nbsp;&middot;&nbsp;
+                        Vageesh D C
+                    </div>
+                    <div class="paper-affiliations">Microsoft</div>
+                    <div class="paper-venue">
+                        <span class="badge">Accepted</span> at <strong>ICLR 2026 Workshop on Memory for LLM-Based Agentic Systems (MemAgent)</strong>
+                    </div>
+                    <div class="paper-links">
+                        <a class="paper-link-btn" href="https://openreview.net/forum?id=krfs16Y8SA" target="_blank" rel="noopener noreferrer">
+                            <i class="fas fa-file-alt"></i> OpenReview
+                        </a>
+                        <a class="paper-link-btn" href="https://openreview.net/pdf?id=krfs16Y8SA" target="_blank" rel="noopener noreferrer">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <div class="container">
+                <div class="paper-content">
+
+                    <div class="tldr-box">
+                        <p style="margin:0;"><strong>TL;DR.</strong> Sequential multi-agent reasoning (Chain-of-Agents) over long contexts is highly sensitive to <em>the order in which chunks are processed</em>. We model inter-chunk dependencies with a <strong>Chow–Liu tree</strong> over embedding-based pairwise similarities, root it at the chunk most similar to the query, and process chunks in <strong>breadth-first</strong> order. This dependency-aware ordering consistently beats default document order and dense semantic ordering across <strong>LongQA</strong>, <strong>LongQA-MC</strong>, and <strong>NarrativeQA</strong>, with up to <strong>+10.68% relative</strong> EM gain.</p>
+                    </div>
+
+                    <h2>Method Overview</h2>
+
+                    <div class="paper-figure">
+                        <img src="images/chowliu.png" alt="Overview of Chow–Liu CoA chunk ordering">
+                        <p class="figure-caption">
+                            <strong>Figure 1.</strong> Overview of Chain-of-Agents (CoA) with chunk order induced by a breadth-first traversal of the <em>Chow–Liu</em> dependency tree (<strong>CL–order</strong>). First, we build a complete graph on chunks where each edge weight is an embedding-based proxy for mutual information between two chunks. The maximum-spanning tree over this graph yields the <em>Chow–Liu tree</em>, a second-order approximation of the global dependency structure. A breadth-first traversal rooted at the chunk most similar to the query gives the <strong>CL–order</strong> used by the worker agents.
+                        </p>
+                    </div>
+
+                    <h2>Why Order Matters in Chain-of-Agents</h2>
+
+                    <p>Large Language Models reason brilliantly within their effective context window, but degrade rapidly when the relevant evidence is spread across hundreds of thousands of tokens. <em>Chain-of-Agents (CoA)</em> is a popular sequential framework for this regime: a long document is split into chunks, and a chain of LLM-based <strong>worker</strong> agents reads them one at a time, each updating a bounded <strong>shared memory</strong> $M_k$. A final <strong>manager</strong> agent reads $M_N$ and produces the answer.</p>
+
+                    <p>From a probabilistic standpoint, CoA is trying to approximate the ideal posterior</p>
+                    <div class="equation-block">
+                        $$ P^\star(y \mid q, x_{1:N}) $$
+                    </div>
+                    <p>that a model with infinite context could compute directly. CoA replaces this with a latent-state factorization in which only a compressed summary is passed between agents. Because each memory update operates under a fixed token budget, ingesting a new chunk forces the worker to <em>discard or compress</em> earlier evidence. The final state $M_N$, and therefore the answer, depends on the order $\pi$ in which chunks are processed:</p>
+                    <div class="equation-block">
+                        $$ P_\pi(y \mid q, x_{1:N}) \neq P^\star(y \mid q, x_{1:N}). $$
+                    </div>
+
+                    <p>In the idealized expressive limit, all orderings would be equivalent. In practice, real LLMs have finite capacity, so the discrepancy</p>
+                    <div class="equation-block">
+                        $$ \mathcal{E}(\pi) = \mathrm{KL}\!\left(P^\star \,\|\, P_\pi\right) $$
+                    </div>
+                    <p>is strictly positive and depends on how well $\pi$ respects the latent dependencies among chunks. Despite this, existing CoA pipelines typically use the <strong>default document order</strong>, or rank chunks by <strong>dense similarity</strong> to the query — neither of which models pairwise relationships between chunks.</p>
+
+                    <h2>Chow–Liu Trees as an Ideal Structural Surrogate</h2>
+
+                    <p>We treat the answer $Y$ and the chunks $X_1, \dots, X_N$ as random variables conditional on the query $q$. The joint distribution $P(Y, X_{1:N} \mid q)$ captures both (i) which chunks contain answer-relevant evidence, and (ii) which chunks are jointly required (multi-hop reasoning, corroborating details, related entities).</p>
+
+                    <p>Directly modeling this joint is intractable. Following the classical Chow–Liu construction, we approximate it with a <strong>tree-structured</strong> graphical model rooted at the answer node:</p>
+                    <div class="equation-block">
+                        $$ P_T(Y, X_{1:N} \mid q) \;=\; P(Y \mid q) \prod_{i=1}^{N} P\bigl(X_i \,\big|\, Z_{\mathrm{pa}_T(i)},\, q\bigr). $$
+                    </div>
+
+                    <p>The Chow–Liu tree $T^\star$ is the maximum-likelihood tree over this family, which is equivalently the <strong>maximum-weight spanning tree</strong> on pairwise mutual information:</p>
+                    <div class="equation-block">
+                        $$ T^\star \;=\; \arg\max_{T \text{ tree}} \sum_{(i,j)\in E(T)} \hat{I}(Z_i; Z_j). $$
+                    </div>
+
+                    <p>A linearization of this tree (e.g., breadth-first from the answer node) yields an ordering that (i) places chunks most informative about $Y$ early, and (ii) keeps mutually dependent chunks adjacent, exposing jointly relevant evidence to CoA <em>before</em> compression irrevocably discards it. This is exactly the bias CoA needs.</p>
+
+                    <h2>An Unsupervised, Embedding-Based Surrogate</h2>
+
+                    <p>Estimating mutual information from data is unrealistic in the long-context regime — labeled $(q, x_{1:N}, y)$ triples are scarce. Motivated by contrastive MI bounds, we instead use a sentence encoder $\phi(\cdot)$ and treat cosine similarity</p>
+                    <div class="equation-block">
+                        $$ s_{ij} \;=\; \frac{\phi(x_i)^\top \phi(x_j)}{\|\phi(x_i)\|\,\|\phi(x_j)\|} $$
+                    </div>
+                    <p>as a <em>surrogate indicator</em> of dependency strength. The embedding-based Chow–Liu tree is the maximum-weight spanning tree over $\{s_{ij}\}$.</p>
+
+                    <p>At inference time the answer $Y$ is unobserved, so we cannot root the tree at it. The observable signal most correlated with $Y$ is the query, so we choose as root the chunk whose embedding is most similar to the query embedding:</p>
+                    <div class="equation-block">
+                        $$ r(q) \;=\; \arg\max_i\, \mathrm{cos}\!\left(\phi(q),\, \phi(x_i)\right). $$
+                    </div>
+
+                    <p>A BFS from $r(q)$ produces the <strong>CL–order</strong> $\pi_{T^{\mathrm{sim}}, q}$ used by the workers.</p>
+
+                    <h3>The CL–CoA algorithm</h3>
+
+                    <div class="algorithm-box">
+                        <div class="algorithm-header">
+                            <span>Algorithm 1 &nbsp; Chow–Liu CoA</span>
+                            <span class="algo-subtitle">dependency-aware chunk ordering for Chain-of-Agents</span>
+                        </div>
+                        <div class="algorithm-body">
+                            <div class="io-line"><span class="io-label">Input</span><span>query $q$; chunks $\{x_i\}_{i=1}^{N}$; embedding encoder $\phi$; worker and manager LLMs.</span></div>
+                            <div class="io-line"><span class="io-label">Output</span><span>predicted answer $\hat{y}$.</span></div>
+                            <ol class="algo-steps">
+                                <li><span class="kw">for</span> $i = 1, \dots, N$ <span class="kw">do</span> &nbsp; $e_i \leftarrow \phi(x_i)$ &nbsp;<span class="cmt"># embed each chunk</span></li>
+                                <li><span class="kw">for</span> all $i &lt; j$ <span class="kw">do</span> &nbsp; $s_{ij} \leftarrow \cos(e_i, e_j)$ &nbsp;<span class="cmt"># pairwise dependency proxy</span></li>
+                                <li>$T^{\mathrm{sim}} \leftarrow \mathrm{MaxSpanningTree}\bigl(\{s_{ij}\}\bigr)$ &nbsp;<span class="cmt"># embedding-based Chow–Liu tree</span></li>
+                                <li>$e_q \leftarrow \phi(q)$; &nbsp; $r \leftarrow \arg\max_i \cos(e_q, e_i)$ &nbsp;<span class="cmt"># query-conditioned root</span></li>
+                                <li>$\pi \leftarrow \mathrm{BFS}(T^{\mathrm{sim}},\, r)$ &nbsp;<span class="cmt"># breadth-first processing order</span></li>
+                                <li>$M_0 \leftarrow \varnothing$ &nbsp;<span class="cmt"># initialize shared memory</span></li>
+                                <li><span class="kw">for</span> $k = 1, \dots, N$ <span class="kw">do</span>
+                                    <ol>
+                                        <li>$j \leftarrow \pi(k)$</li>
+                                        <li>$M_k \leftarrow \mathrm{Worker}\bigl(q,\, x_j,\, M_{k-1}\bigr)$ &nbsp;<span class="cmt"># compress new evidence into memory</span></li>
+                                    </ol>
+                                </li>
+                                <li>$\hat{y} \leftarrow \mathrm{Manager}(q,\, M_N)$</li>
+                                <li><span class="kw">return</span> $\hat{y}$</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <p class="figure-caption" style="margin-top:0.25rem;"><strong>Lines 1–5</strong> build the embedding-based Chow–Liu tree and turn it into a query-conditioned BFS ordering. <strong>Lines 6–9</strong> are the standard Chain-of-Agents inner loop — we change <em>only</em> the order in which chunks are fed to the workers.</p>
+
+                    <h2>Results</h2>
+
+                    <p>We evaluate on three long-context benchmarks from <strong>HELMET</strong>: <em>LongQA</em> and <em>LongQA-MC</em> from $\infty$-Bench, and <em>NarrativeQA</em> restricted to queries with context length over 256K tokens. For free-form answers we report Ragas <em>answer relevance</em>; for multiple choice we report exact-match (EM) accuracy. Chunks are 8K tokens with an 8K-token memory budget per agent. Embeddings are <code>Text-Embedding-3-Large</code>.</p>
+
+                    <div class="results-table-wrap">
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">Model</th>
+                                    <th colspan="3" class="group-head">LongQA (Ragas&nbsp;↑)</th>
+                                    <th colspan="3" class="group-head">LongQA-MC (EM&nbsp;↑)</th>
+                                    <th colspan="3" class="group-head">NarrativeQA (Ragas&nbsp;↑)</th>
+                                </tr>
+                                <tr>
+                                    <th>Default</th><th>Dense</th><th class="cl-col">CL–order</th>
+                                    <th>Default</th><th>Dense</th><th class="cl-col">CL–order</th>
+                                    <th>Default</th><th>Dense</th><th class="cl-col">CL–order</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Qwen-3-14B</td>
+                                    <td>41.43</td><td>42.25</td><td class="cl-col">44.12</td>
+                                    <td>24.89</td><td>26.20</td><td class="cl-col">30.26</td>
+                                    <td>35.72</td><td>38.26</td><td class="cl-col">41.23</td>
+                                </tr>
+                                <tr>
+                                    <td>GPT-4.1-mini</td>
+                                    <td>51.94</td><td>47.96</td><td class="cl-col">54.35</td>
+                                    <td>65.22</td><td>67.39</td><td class="cl-col">70.29</td>
+                                    <td>50.16</td><td>50.81</td><td class="cl-col">52.39</td>
+                                </tr>
+                                <tr>
+                                    <td>GPT-4.1</td>
+                                    <td>59.03</td><td>58.56</td><td class="cl-col">60.68</td>
+                                    <td>82.84</td><td>84.33</td><td class="cl-col">85.07</td>
+                                    <td>57.30</td><td>55.93</td><td class="cl-col">58.08</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="figure-caption" style="margin-top:0.5rem;"><strong>Table 1.</strong> Performance on long-context benchmarks with the GPT-4.1 series and Qwen-3. <strong>CL–order</strong> consistently outperforms both <em>Default</em> document order and the <em>Dense</em> semantic-score baseline across all three models and all three datasets.</p>
+
+                    <p>Across the board, CL–order wins on every (model, benchmark) pair. The aggregate gains over the strongest baseline are <strong>+10.68% relative EM</strong> on LongQA-MC versus default order, and <strong>+6.89% relative EM</strong> versus dense semantic ranking. On Ragas-based answer relevance the corresponding relative gains are <strong>+5.86%</strong> and <strong>+6.01%</strong>. Notably, the dense semantic baseline is <em>inconsistent</em> — for GPT-4.1 and GPT-4.1-mini on LongQA, it actually <em>hurts</em> performance relative to the default document order, confirming that purely local query similarity is the wrong objective when chunks must compose under a memory bottleneck.</p>
+
+                    <h3>Ablation: BFS on Chow–Liu vs. greedy DFS</h3>
+
+                    <div class="paper-figure">
+                        <img src="images/dfs_vs_cl.png" alt="DFS vs CL-order on LongQA-MC" style="max-width: 560px;">
+                        <p class="figure-caption">
+                            <strong>Figure 2.</strong> Greedy DFS over the complete chunk graph vs. BFS over the Chow–Liu tree (<strong>CL–order</strong>), on LongQA-MC. CL–order wins across all three models. DFS chains chunks by purely local similarity; one step toward a high-similarity but contextually irrelevant neighbor is enough to derail the traversal. The Chow–Liu MST instead commits to <em>globally</em> optimal pairwise dependencies before any traversal happens.
+                        </p>
+                    </div>
+
+                    <h3>Ablation: scoring function and embeddings</h3>
+
+                    <p>We also swap <code>Text-Embedding-3-Large</code> for two alternatives. With the open-weight <strong>Qwen-3-Embedding-8B</strong>, CL–order again wins consistently, with the largest gains on the smaller models. With sparse <strong>BM25</strong> the gains shrink and are less consistent: BM25 measures lexical overlap rather than semantic dependency, and is only a coarse proxy for mutual information.</p>
+
+                    <h2>Takeaways</h2>
+
+                    <ul>
+                        <li><strong>Order is structure, not preprocessing.</strong> Under a memory bottleneck, chunk ordering is a structured-inference choice that materially changes what the final memory state can represent.</li>
+                        <li><strong>Pairwise dependencies matter more than per-chunk relevance.</strong> Ranking chunks by query similarity (the <em>Dense</em> baseline) doesn't preserve composability, and can actively hurt.</li>
+                        <li><strong>Chow–Liu trees are a great fit.</strong> They give the maximum-likelihood tree approximation to the latent dependency structure, are cheap to compute from embeddings, and require <em>no training data</em>.</li>
+                        <li><strong>Global &gt; local.</strong> Building the MST first and traversing second beats greedy local chaining (DFS) on every model we tested.</li>
+                        <li><strong>Smaller models benefit most.</strong> Gains are most pronounced for GPT-4.1-mini and Qwen-3-14B — smaller workers are more sensitive to noisy context, and CL–order gives them cleaner trajectories.</li>
+                    </ul>
+
+                    <h2>BibTeX</h2>
+                    <div class="bibtex-block">@inproceedings{gupta2026chowliu,
+  title     = {Chow--Liu Ordering for Long-Context Reasoning in Chain-of-Agents},
+  author    = {Gupta, Naman and Singh, Vaibhav and Iyer, Arun and
+               Shiragur, Kirankumar and Grover, Pratham and Bairi, Ramakrishna B and
+               Maiti, Ritabrata and Damle, Sankarshan and Gupta, Shachee Mishra and
+               Maurya, Rishikesh and D C, Vageesh},
+  booktitle = {ICLR 2026 Workshop on Memory for LLM-Based Agentic Systems},
+  year      = {2026},
+  url       = {https://openreview.net/forum?id=krfs16Y8SA}
+}</div>
+
+                    <div class="blog-navigation">
+                        <a href="../index.html#blog" class="back-to-blog">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Blog
+                        </a>
+                        <div class="tag-list">
+                            <span class="tag">Research</span>
+                            <span class="tag">LLM</span>
+                            <span class="tag">Long Context</span>
+                            <span class="tag">Chain-of-Agents</span>
+                            <span class="tag">ICLR 2026</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Arun Iyer. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../script.js"></script>
+</body>
+</html>
