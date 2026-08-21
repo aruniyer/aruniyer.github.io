@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Running Qwen3-Coder-30B Locally with LM Studio and pi - Arun Iyer</title>
+    <meta name="description" content="A field-tuned settings guide for running the Qwen3-Coder-30B-A3B MoE model as a private, offline coding agent with LM Studio and the pi coding agent.">
+    <meta property="og:title" content="Running Qwen3-Coder-30B Locally with LM Studio and pi">
+    <meta property="og:description" content="The exact LM Studio load settings, the one VRAM rule that decides whether a 30B model flies or crawls, and how to wire it into the pi coding agent.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://aruniyer.github.io/blog/running-qwen3-coder-locally.html">
+    <meta property="og:image" content="https://www.cse.iitb.ac.in/~aruniyer/images/intro_self.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Running Qwen3-Coder-30B Locally with LM Studio and pi">
+    <meta name="twitter:description" content="Field-tuned settings for running a 30B coding model locally as an agent.">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="blog-post.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <h1><a href="../index.html" style="color: inherit; text-decoration: none;">Arun Iyer</a></h1>
+                </div>
+                <ul class="nav-menu" id="primary-navigation">
+                    <li><a href="../index.html#about" class="nav-link">About</a></li>
+                    <li><a href="../index.html#research" class="nav-link">Research</a></li>
+                    <li><a href="../index.html#publications" class="nav-link">Publications</a></li>
+                    <li><a href="../index.html#blog" class="nav-link">Blog</a></li>
+                    <li><a href="../index.html#contact" class="nav-link">Contact</a></li>
+                </ul>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="primary-navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <article class="blog-post">
+            <header class="blog-post-header">
+                <div class="container">
+                    <div class="blog-post-content">
+                        <div class="blog-post-meta">
+                            <time datetime="2026-08-21"><i class="fas fa-calendar"></i> August 21, 2026</time>
+                            <span><i class="fas fa-tag"></i> AI Tools</span>
+                            <span><i class="fas fa-clock"></i> 8 min read</span>
+                        </div>
+                        <h1>🖥️ Running Qwen3-Coder-30B Locally with LM Studio and pi</h1>
+                        <div class="tag-list">
+                            <span class="tag">Local LLM</span>
+                            <span class="tag">Qwen3-Coder</span>
+                            <span class="tag">LM Studio</span>
+                            <span class="tag">pi</span>
+                            <span class="tag">Coding Agents</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="container">
+                <div class="blog-post-content">
+                    <h2>Introduction</h2>
+
+                    <p>A 16&nbsp;GB laptop GPU is enough to run a genuinely capable coding model entirely on your own machine — no API keys, no data leaving the box. The model I settled on is <strong>Qwen3-Coder-30B-A3B-Instruct</strong> <a href="#ref1">[1]</a>: a Mixture-of-Experts model with 30&nbsp;billion total parameters but only <strong>~3&nbsp;billion active per token</strong>, so it reasons like a big model while running at the speed of a small one.</p>
+
+                    <p>This post is the settings sheet I wish I'd had: the exact LM Studio load configuration, the one VRAM rule that decides whether the model flies or crawls, how to wire it into <strong>pi</strong> (a terminal coding agent) <a href="#ref2">[2]</a>, and honest benchmarks from driving it against a real codebase. Everything here was measured on a laptop <strong>RTX&nbsp;5080 (16&nbsp;GB VRAM)</strong>.</p>
+
+                    <hr>
+
+                    <h2>⚠️ The one rule: never fill VRAM to the top</h2>
+
+                    <p>This is the single most important thing, so it goes first. The Q4_K_M quantization of this model is about <strong>17.4&nbsp;GB</strong> of weights — which is <em>larger</em> than a 16&nbsp;GB card. That means some layers <strong>must</strong> be offloaded to the CPU no matter what; the full model physically cannot sit on the GPU.</p>
+
+                    <p>The trap is the "max GPU offload" setting. Turn it up and LM Studio dutifully tries to place everything on the GPU. On Windows, instead of erroring, the NVIDIA driver silently spills the overflow into <strong>shared GPU memory</strong> — system RAM accessed over the PCIe bus. Every token then shuttles data across PCIe, and throughput collapses:</p>
+
+                    <blockquote>Same model, same GPU: <strong>0.6 tokens/sec</strong> at "max" offload (VRAM 97% full, spilling) versus <strong>~24 tokens/sec</strong> with the offload dialed back to leave headroom. A ~40× difference from one setting.</blockquote>
+
+                    <p>The fix is counterintuitive: <strong>put <em>less</em> on the GPU, not more.</strong> Leave roughly <strong>1.5–2&nbsp;GB of VRAM free</strong> for the KV cache and driver overhead, and verify the real number with <code>nvidia-smi</code> rather than trusting the loader's estimate. For a MoE model that overflows VRAM, partial offload beats "max" every single time.</p>
+
+                    <hr>
+
+                    <h2>🎛️ LM Studio load settings</h2>
+
+                    <p>Set these in the model's load panel <em>before</em> loading it (in LM Studio: <strong>My Models → the model's load configuration</strong>). The values below are the tested 16&nbsp;GB baseline.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Setting</th>
+                                <th>Value</th>
+                                <th>Why</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>GPU Offload</strong></td>
+                                <td><code>0.60</code></td>
+                                <td>The critical dial. Offload ~60% of layers on 16&nbsp;GB; target ~1.5–2&nbsp;GB free VRAM. Verify with <code>nvidia-smi</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Context Length</strong></td>
+                                <td><code>32768</code></td>
+                                <td>Agent harnesses need room. An 8K window silently truncates the system prompt and file context, causing "forgotten instructions." 32K is the working floor.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Flash Attention</strong></td>
+                                <td><code>ON</code></td>
+                                <td>Large KV-cache savings — this is the headroom that makes 32K context affordable without spilling.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>KV Cache Quantization</strong></td>
+                                <td><code>Q8_0</code></td>
+                                <td>Roughly halves per-token context memory. Enables 48–64K context, or spend the freed VRAM on a higher offload ratio. Negligible quality loss at Q8.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p>For sampling, start deterministic for coding — <code>temperature 0.2–0.3</code>. For more exploratory generation, Qwen's recommended defaults are <code>temp 0.7 · top_p 0.8 · top_k 20 · repeat_penalty 1.05</code> <a href="#ref1">[1]</a>.</p>
+
+                    <h3>Scale the offload to your card</h3>
+
+                    <p>The principle is identical at every tier: <strong>leave headroom.</strong> Only the 16&nbsp;GB row is measured; the others are sensible starting points to verify and adjust with <code>nvidia-smi</code>.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>VRAM</th>
+                                <th>GPU offload</th>
+                                <th>Context</th>
+                                <th>~Speed</th>
+                                <th>Feel</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>12&nbsp;GB</td>
+                                <td>~0.35</td>
+                                <td>16–24K</td>
+                                <td>10–15 tok/s</td>
+                                <td>Usable, slow</td>
+                            </tr>
+                            <tr>
+                                <td><strong>16&nbsp;GB</strong> (tested)</td>
+                                <td><strong>0.60</strong></td>
+                                <td><strong>32K</strong></td>
+                                <td><strong>~24 tok/s</strong></td>
+                                <td>Sweet spot</td>
+                            </tr>
+                            <tr>
+                                <td>24&nbsp;GB</td>
+                                <td>~0.90</td>
+                                <td>32–64K</td>
+                                <td>50–70 tok/s</td>
+                                <td>Comfortable</td>
+                            </tr>
+                            <tr>
+                                <td>32&nbsp;GB+</td>
+                                <td>max</td>
+                                <td>64K+</td>
+                                <td>Fast</td>
+                                <td>Fully on-GPU</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p>Below 24&nbsp;GB the full weights can't sit entirely on the GPU, so throughput is capped by the CPU-offloaded layers. That's the price of running a 30B model on a small card — and it's still worth paying.</p>
+
+                    <hr>
+
+                    <h2>🚀 Start the server</h2>
+
+                    <p>LM Studio exposes an OpenAI-compatible endpoint that pi (and other tools like Continue or Cline) talk to. Its <code>lms</code> CLI <a href="#ref3">[3]</a> makes this scriptable:</p>
+
+<pre><code># start the local server → http://localhost:1234/v1
+lms server start
+
+# load the model with the tuned settings (16 GB baseline)
+lms load qwen3-coder-30b-a3b-instruct --gpu 0.60 --context-length 32768 --identifier coder -y
+
+# confirm it's resident and see the real context window
+lms ps</code></pre>
+
+                    <p>Note that Flash Attention and KV-cache quantization are set in the GUI load panel, not on the CLI — enable them there once, and this <code>lms load</code> command reproduces the rest.</p>
+
+                    <hr>
+
+                    <h2>🔌 Wire up pi</h2>
+
+                    <p>pi is a terminal coding agent with read, bash, edit, and write tools <a href="#ref2">[2]</a>. The community <code>pi-lmstudio</code> extension <a href="#ref4">[4]</a> bridges it to LM Studio and auto-discovers loaded models.</p>
+
+                    <p><strong>1. Install the extension</strong> — it connects to <code>http://127.0.0.1:1234</code> by default:</p>
+
+<pre><code>pi install npm:pi-lmstudio</code></pre>
+
+                    <p><strong>2. Make it the default model</strong> by editing <code>~/.pi/agent/settings.json</code>:</p>
+
+<pre><code>{
+  "packages": ["npm:pi-lmstudio"],
+  "defaultProvider": "lmstudio",
+  "defaultModel": "qwen3-coder-30b-a3b-instruct"
+}</code></pre>
+
+                    <p><strong>3. Or pick it live</strong> inside pi with the <code>/model</code> command or <code>Ctrl+P</code>, searching for models prefixed <code>lmstudio</code>. Then just run <code>pi</code> in your project. For a remote or custom endpoint, add <code>{ "url": "…" }</code> to <code>~/.pi/agent/lmstudio.json</code>.</p>
+
+                    <hr>
+
+                    <h2>📊 What to expect</h2>
+
+                    <p>I measured this driving pi against a real 121-file C# codebase. The encouraging finding: <strong>quality held up — the model stayed grounded and did not hallucinate.</strong> Latency, not intelligence, is the ceiling, and it scales with how far a task fans out across files.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task type</th>
+                                <th>Time</th>
+                                <th>Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Search / locate (ripgrep + read a couple files)</td>
+                                <td>27–55 sec</td>
+                                <td>Accurate; every cited file verified to exist</td>
+                            </tr>
+                            <tr>
+                                <td>Single-file edit or explanation</td>
+                                <td>~1 min</td>
+                                <td>The daily-driver sweet spot</td>
+                            </tr>
+                            <tr>
+                                <td>Multi-file synthesis (trace a pipeline across 5 projects)</td>
+                                <td>~5 min</td>
+                                <td>Correct — all 9 cited classes were real, zero hallucination</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Rule of thumb:</strong> it's excellent for scoped work — find X, explain Y, edit this file — and tedious for broad autonomous runs that fan out across a whole repo. Keep tasks focused, and reach for a cloud model on the big fan-out jobs.</p>
+
+                    <hr>
+
+                    <h2>🧭 Conclusion</h2>
+
+                    <p>A 30B MoE coding model on a 16&nbsp;GB laptop is a real, private, offline pair-programmer — provided you respect the one rule: <strong>leave VRAM headroom instead of maxing the GPU offload.</strong> Get that right, set a 32K context so agent harnesses don't choke, wire it into pi, and you have a capable local assistant for scoped coding tasks that never sends a byte to the cloud.</p>
+
+                    <hr>
+
+                    <h2>References</h2>
+
+                    <ol class="references">
+                        <li id="ref1">Qwen Team. "Qwen3-Coder-30B-A3B-Instruct." Hugging Face, 2025. Available: <a href="https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct" target="_blank" rel="noopener noreferrer">https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct</a></li>
+
+                        <li id="ref2">Zechner, Mario. "pi — a coding agent for the terminal." GitHub Repository, 2025. Available: <a href="https://github.com/mario-zechner/pi-coding-agent" target="_blank" rel="noopener noreferrer">https://github.com/mario-zechner/pi-coding-agent</a></li>
+
+                        <li id="ref3">LM Studio. "lms — LM Studio's CLI for models, server, and runtime." LM Studio Developer Docs, 2025. Available: <a href="https://lmstudio.ai/docs/developer" target="_blank" rel="noopener noreferrer">https://lmstudio.ai/docs/developer</a></li>
+
+                        <li id="ref4">pi-lmstudio. "LM Studio integration extension for the pi coding agent." npm Registry, 2025. Available: <a href="https://www.npmjs.com/package/pi-lmstudio" target="_blank" rel="noopener noreferrer">https://www.npmjs.com/package/pi-lmstudio</a></li>
+                    </ol>
+
+                    <div class="blog-navigation">
+                        <a href="../index.html#blog" class="back-to-blog">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Blog
+                        </a>
+                        <div class="tag-list">
+                            <span class="tag">Local LLM</span>
+                            <span class="tag">Qwen3-Coder</span>
+                            <span class="tag">LM Studio</span>
+                            <span class="tag">pi</span>
+                            <span class="tag">Coding Agents</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Arun Iyer. All rights reserved.</p>
+            <p>Last updated: August 2026</p>
+        </div>
+    </footer>
+
+    <script src="../script.js"></script>
+</body>
+</html>
