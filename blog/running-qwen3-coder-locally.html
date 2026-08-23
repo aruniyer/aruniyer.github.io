@@ -54,7 +54,7 @@
                         <div class="blog-post-meta">
                             <time datetime="2026-08-21"><i class="fas fa-calendar"></i> August 21, 2026</time>
                             <span><i class="fas fa-tag"></i> AI Tools</span>
-                            <span><i class="fas fa-clock"></i> 8 min read</span>
+                            <span><i class="fas fa-clock"></i> 10 min read</span>
                         </div>
                         <h1>🖥️ Running Qwen3-Coder-30B Locally with LM Studio and pi</h1>
                         <div class="tag-list">
@@ -250,9 +250,93 @@ lms ps</code></pre>
 
                     <hr>
 
+                    <h2>🧮 MoE beats dense on a 16&nbsp;GB card</h2>
+
+                    <p>The 30B-A3B isn't the only model worth running here, and comparing it against a dense model of similar size exposes the most useful lesson for a VRAM-constrained machine. I tested two more on the same RTX&nbsp;5080: <strong>Qwen3.6-35B-A3B</strong> (a Mixture-of-Experts model, ~3&nbsp;billion active per token) and <strong>Qwen3.8-27B</strong> (a <em>dense</em> model, all 27&nbsp;billion active). Neither fits fully in 16&nbsp;GB, so both must offload to the CPU — but the results diverge sharply.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Type</th>
+                                <th>Disk (Q4)</th>
+                                <th>Best config</th>
+                                <th>VRAM</th>
+                                <th>Speed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Qwen3.6-35B-A3B</td>
+                                <td>MoE (~3B active)</td>
+                                <td>19.7 GB</td>
+                                <td>32K @ 0.62</td>
+                                <td>14.4 GB</td>
+                                <td><strong>~23 tok/s</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Qwen3.8-27B</td>
+                                <td>dense (27B active)</td>
+                                <td>15.7 GB</td>
+                                <td>16K @ 0.74</td>
+                                <td>15.3 GB</td>
+                                <td>~8 tok/s</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p>The MoE model is <em>larger on disk</em> yet runs <strong>roughly 3× faster</strong> and leaves <em>more</em> VRAM headroom. The reason is the active-parameter count: the MoE routes to only ~3B parameters per token, so the layers stranded on the CPU barely slow it down — whereas the dense 27B pushes <em>all</em> 27B parameters through those CPU-bottlenecked offloaded layers on every single token. The dense model is also VRAM-tight (~15.3&nbsp;GB, little safety margin), so it's the harder one to run safely.</p>
+
+                    <p><strong>The lesson:</strong> when you're VRAM-constrained and offloading is unavoidable, choose your model by <em>active</em> parameters, not total size. On a 16&nbsp;GB card, a bigger MoE will usually beat a smaller dense model on both speed and headroom.</p>
+
+                    <p>To see how that plays out in practice, I drove the 35B-A3B through pi on the same 121-file C# codebase and ran three tasks, timing each against the 30B-Coder for reference:</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>pi task (real codebase)</th>
+                                <th>Qwen3-Coder-30B</th>
+                                <th>Qwen3.6-35B-A3B</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Comprehension — read a project, summarize it</td>
+                                <td>55 s</td>
+                                <td>28 s</td>
+                            </tr>
+                            <tr>
+                                <td>Code search — locate the logic that does X</td>
+                                <td>27 s</td>
+                                <td>63 s</td>
+                            </tr>
+                            <tr>
+                                <td>Multi-file synthesis — trace a pipeline across 5 projects</td>
+                                <td>301 s (9 steps)</td>
+                                <td>492 s (11 steps, with code)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p>The two models decode at a similar per-token rate (~24 vs ~23 tok/s), so the wall-clock differences come from <em>how much each model chooses to read and write</em>. The 35B-A3B tends to produce more thorough, code-grounded answers — so it's quicker when a task is bounded (comprehension) but takes longer when it digs deeper (search and synthesis). Its output was consistently richer; the one caveat is that on the longest synthesis it invented a single class name, where the more terse 30B stayed fully grounded. On balance the 35B-A3B is the one I'd run day to day — just don't read wall-clock time as raw speed.</p>
+
+                    <hr>
+
+                    <h2>🔭 The next step: let the system tune it for you</h2>
+
+                    <p>Everything above is manual — you pick the offload ratio and leave the headroom yourself. A recent research system, <strong>FreeToken</strong> <a href="#ref5">[5]</a>, automates exactly that decision. Instead of a fixed GPU-offload ratio, it measures your machine's PCIe and CPU-memory bandwidth and then decides, per decode step, how many of the missing experts to stream to the GPU over PCIe versus compute directly on the CPU. It keeps the full expert pool in system RAM as the authoritative copy and treats VRAM purely as a cache — in its framing, GPU memory <em>"affects only performance, never correctness."</em></p>
+
+                    <p>I tried it on this same laptop, and it's genuinely clever to watch: it benchmarked my bandwidth, auto-selected a hybrid backend, and chose to fetch ~34% of each decode step's expert misses over PCIe with the rest on the CPU — automatically splitting the 35B across GPU and CPU layers. Two honest caveats for a Windows machine like mine, though. First, it <em>flips the bottleneck from VRAM to system RAM</em>: the whole model has to live in your 32&nbsp;GB, so the 35B sits right at the edge of what fits. Second, on Windows it falls back to a slower router kernel (the optimized one ships only for Linux), so you won't see the paper's headline throughput here. It's early research software and it wobbled at that size — but the direction is unmistakable: the offload tuning this post does by hand is exactly what these systems are starting to do for you automatically.</p>
+
+                    <hr>
+
                     <h2>🧭 Conclusion</h2>
 
-                    <p>A 30B MoE coding model on a 16&nbsp;GB laptop is a real, private, offline pair-programmer — provided you respect the one rule: <strong>leave VRAM headroom instead of maxing the GPU offload.</strong> Get that right, set a 32K context so agent harnesses don't choke, wire it into pi, and you have a capable local assistant for scoped coding tasks that never sends a byte to the cloud.</p>
+                    <p>A 30B-class MoE coding model on a 16&nbsp;GB laptop is a real, private, offline pair-programmer — provided you respect the one rule: <strong>leave VRAM headroom instead of maxing the GPU offload.</strong> Get that right, set a 32K context so agent harnesses don't choke, and wire it into pi, and you have a capable local assistant for scoped coding tasks that never sends a byte to the cloud.</p>
+
+                    <p>If you can spare the download, <strong>Qwen3.6-35B-A3B is the one I'd actually run</strong>: on the same card it was faster and more detailed than the 30B-Coder on real tasks, while a similarly-sized <em>dense</em> model (Qwen3.8-27B) crawled at a third of the speed. That's the lasting takeaway — on a VRAM-constrained machine, a bigger Mixture-of-Experts model beats a smaller dense one, because only its handful of active parameters ever touch the slow CPU-offloaded path. Pick by active parameters, leave your headroom, and a 16&nbsp;GB laptop is a genuinely useful local coding box.</p>
+
+                    <p>And the ceiling keeps rising. Even in the short time I spent on this, systems like FreeToken <a href="#ref5">[5]</a> are already turning the manual dial-twiddling above into something automatic — and coaxing frontier-sized models onto plain consumer hardware. If a 30B feels this capable on a laptop <em>today</em>, I'm genuinely excited to see where local coding lands a year from now. This space is moving fast, and it's well worth watching.</p>
 
                     <hr>
 
@@ -266,6 +350,8 @@ lms ps</code></pre>
                         <li id="ref3">LM Studio. "lms — LM Studio's CLI for models, server, and runtime." LM Studio Developer Docs, 2025. Available: <a href="https://lmstudio.ai/docs/developer" target="_blank" rel="noopener noreferrer">https://lmstudio.ai/docs/developer</a></li>
 
                         <li id="ref4">pi-lmstudio. "LM Studio integration extension for the pi coding agent." npm Registry, 2025. Available: <a href="https://www.npmjs.com/package/pi-lmstudio" target="_blank" rel="noopener noreferrer">https://www.npmjs.com/package/pi-lmstudio</a></li>
+
+                        <li id="ref5">Yang, S., et al. "FreeToken: Efficient Edge-Native MoE Serving with Bandwidth-Adaptive Execution." arXiv preprint arXiv:2608.16157, 2026. Available: <a href="https://arxiv.org/abs/2608.16157" target="_blank" rel="noopener noreferrer">https://arxiv.org/abs/2608.16157</a></li>
                     </ol>
 
                     <div class="blog-navigation">
