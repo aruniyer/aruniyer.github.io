@@ -54,7 +54,7 @@
                         <div class="blog-post-meta">
                             <time datetime="2026-08-21"><i class="fas fa-calendar"></i> August 21, 2026</time>
                             <span><i class="fas fa-tag"></i> AI Tools</span>
-                            <span><i class="fas fa-clock"></i> 10 min read</span>
+                            <span><i class="fas fa-clock"></i> 13 min read</span>
                         </div>
                         <h1>🖥️ Running Qwen3-Coder-30B Locally with LM Studio and pi</h1>
                         <div class="tag-list">
@@ -319,6 +319,109 @@ lms ps</code></pre>
                     </table>
 
                     <p>The two models decode at a similar per-token rate (~24 vs ~23 tok/s), so the wall-clock differences come from <em>how much each model chooses to read and write</em>. The 35B-A3B tends to produce more thorough, code-grounded answers — so it's quicker when a task is bounded (comprehension) but takes longer when it digs deeper (search and synthesis). Its output was consistently richer; the one caveat is that on the longest synthesis it invented a single class name, where the more terse 30B stayed fully grounded. On balance the 35B-A3B is the one I'd run day to day — just don't read wall-clock time as raw speed.</p>
+
+                    <hr>
+
+                    <h2>🧪 An 11&nbsp;GB desktop: RTX&nbsp;2080&nbsp;Ti + 64&nbsp;GB RAM</h2>
+
+                    <p>I repeated the exercise on a much older desktop: a <strong>Dell Precision&nbsp;5820</strong> with an <strong>8-core / 16-thread Xeon&nbsp;W-2145</strong>, <strong>64&nbsp;GB of system RAM</strong>, and an <strong>RTX&nbsp;2080&nbsp;Ti with 11&nbsp;GB of VRAM</strong>. This is a useful second data point because the GPU is several generations older and has 5&nbsp;GB less VRAM than the laptop above, while the extra system memory gives large partially-offloaded models room to breathe.</p>
+
+                    <p>The Windows desktop was already using roughly 4&nbsp;GB of VRAM before loading a model, so copying the 16&nbsp;GB settings was not an option. I kept the same 32K context, Flash Attention and Q8 KV cache, then measured real VRAM with <code>nvidia-smi</code> after each load rather than trusting LM Studio's estimate.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Load strategy</th>
+                                <th>VRAM free</th>
+                                <th>Decode speed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Qwen3.6-35B-A3B</td>
+                                <td>20% ordinary layer offload</td>
+                                <td>1.68 GB</td>
+                                <td>12.0 tok/s</td>
+                            </tr>
+                            <tr>
+                                <td>Qwen3.6-35B-A3B</td>
+                                <td>all shared layers on GPU; all expert layers on CPU</td>
+                                <td>4.14 GB</td>
+                                <td>24.2 tok/s</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Qwen3.6-35B-A3B</strong></td>
+                                <td><strong>all shared layers on GPU; 85% of expert layers on CPU</strong></td>
+                                <td><strong>1.54 GB</strong></td>
+                                <td><strong>28.6 tok/s</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Qwen3.8-27B</td>
+                                <td>23% ordinary layer offload</td>
+                                <td>1.31 GB</td>
+                                <td>3.3 tok/s</td>
+                            </tr>
+                            <tr>
+                                <td>Muse Glimmer 30B</td>
+                                <td>21% ordinary layer offload</td>
+                                <td>1.84 GB</td>
+                                <td>2.9 tok/s</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p>The surprising result is that the 2080&nbsp;Ti can decode the 35B MoE <em>faster</em> than the newer 16&nbsp;GB laptop result above. The winning layout is not ordinary partial layer offload. It puts the model's shared attention and other dense work on the GPU, keeps most expert blocks in the roomy 64&nbsp;GB system RAM, and lets only the active experts cross the CPU path. LM Studio exposes that split as a separate <code>numCpuExpertLayersRatio</code> setting through its SDK:</p>
+
+                    <pre><code>{
+  contextLength: 32768,
+  maxParallelPredictions: 1,
+  gpu: {
+    ratio: "max",
+    mainGpu: 0,
+    numCpuExpertLayersRatio: 0.85
+  },
+  flashAttention: true,
+  llamaKCacheQuantizationType: "q8_0",
+  llamaVCacheQuantizationType: "q8_0",
+  offloadKVCacheToGpu: true,
+  keepModelInMemory: true
+}</code></pre>
+
+                    <p>On this machine that became <code>--n-gpu-layers 999999 --n-cpu-moe 35</code> in the underlying llama.cpp process. Moving every expert layer to the CPU was already twice as fast as naive 20% offload; allowing the remaining 15% of expert layers onto the GPU raised throughput again while preserving the target ~1.5&nbsp;GB headroom. This is specific to MoE models: the dense Qwen3.8 and Muse models had no equivalent expert split and remained CPU-bound at roughly 3&nbsp;tok/s.</p>
+
+                    <h3>pi results on the same 121-file C# codebase</h3>
+
+                    <p>I then ran the same three styles of pi task against the same 121-file C# codebase used for the earlier measurements. These are wall-clock agent times, not pure decode benchmarks: they include every file search, read, reasoning pass and generated token.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>pi task</th>
+                                <th>Time</th>
+                                <th>Accuracy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Comprehension — summarize the CLI project</td>
+                                <td>5m 26s</td>
+                                <td>Good; detailed and largely grounded</td>
+                            </tr>
+                            <tr>
+                                <td>Code search — locate one-line goal expansion</td>
+                                <td>7m 43s</td>
+                                <td>Mixed; found the core API but invented two outer call-chain symbols</td>
+                            </tr>
+                            <tr>
+                                <td>Multi-project synthesis — trace the execution pipeline</td>
+                                <td>32m 52s</td>
+                                <td>Poor; fluent but contained substantial invented architecture</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p>The runtime held close to <strong>29&nbsp;tok/s</strong>, so the long wall-clock times were not a decode problem. The agent chose to perform a great deal of exploration and then generated increasingly long answers. More importantly, answer confidence did not track correctness: the broadest trace looked the most authoritative while hallucinating nonexistent entry points, factory APIs, options and directory layouts. On this setup the 35B-A3B is excellent for bounded questions, but broad repository synthesis still needs aggressive scoping and independent verification.</p>
 
                     <hr>
 
